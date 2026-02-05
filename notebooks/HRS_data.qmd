@@ -56,6 +56,17 @@ pensions['SJ2W411'].plot.hist(bins = 20, range = (1952, 2023), edgecolor = 'blac
             Partial Interview
 
 ```{python}
-pensions['SJ2W429M1']
+target_variables = pensions[['HHID', 'PN', 'SJ2W410', 'SJ2W411']]
+target_variables = target_variables.rename(columns = {'SJ2W410': 'Year Job - Begin', 'SJ2W411' : 'Year Job - End'})
+target_variables['HHID'] = target_variables['HHID'].astype(str)
+target_variables['PN'] = target_variables['PN'].astype(str)
+target_variables['HHID + PN'] = target_variables['HHID'] + target_variables['PN']
+target_variables
+
 ```
+
+```{python}
+pensions['PN'].value_counts()
+```
+
 
