@@ -22,7 +22,7 @@ pensions = pd.read_csv('/Users/marianavarro/Desktop/pdi_pensions/csv_files/h22j2
     2.  OLD JOB                           3489
     Blank.  Newly added past pension      3866
 
-SJ2W410 - Year Job - Begin
+**SJ2W410 - Year Job - Begin**
 
     This column will need to be cleaned as there are some job start years as low as -8 and as high as 9999.
 ```{python}
@@ -54,3 +54,8 @@ pensions['SJ2W411'].plot.hist(bins = 20, range = (1952, 2023), edgecolor = 'blac
     99. RF (Refused)             37          
     Blank.  INAP (Inapplicable); 1793      
             Partial Interview
+
+```{python}
+pensions['SJ2W429M1']
+```
+
