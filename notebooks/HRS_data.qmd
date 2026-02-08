@@ -22,7 +22,7 @@ pensions = pd.read_csv('/Users/marianavarro/Desktop/pdi_pensions/csv_files/h22j2
     2.  OLD JOB                           3489
     Blank.  Newly added past pension      3866
 
-SJ2W410 - Year Job - Begin
+**SJ2W410 - Year Job - Begin**
 
     This column will need to be cleaned as there are some job start years as low as -8 and as high as 9999.
 ```{python}
@@ -54,3 +54,24 @@ pensions['SJ2W411'].plot.hist(bins = 20, range = (1952, 2023), edgecolor = 'blac
     99. RF (Refused)             37          
     Blank.  INAP (Inapplicable); 1793      
             Partial Interview
+
+```{python}
+target_variables = pensions[['HHID', 'PN', 'SJ2W410', 'SJ2W411', 'SJ2W405', 'SJ2W407', 'SJ2W426', 'SJ2W009']]
+target_variables = target_variables.rename(columns = {'SJ2W410': 'Year Job - Begin', 'SJ2W411' : 'Year Job - End', 'SJ2W405': 'Plan Provider', 'SJ2W407' : 'Type of Plan', 'SJ2W426' : 'Recieving Benefits', 'SJ2W009' : 'Amount in Pension Now'})
+target_variables['HHID'] = target_variables['HHID'].astype(str)
+target_variables['PN'] = target_variables['PN'].astype(str)
+target_variables['HHID + PN'] = target_variables['HHID'] + target_variables['PN']
+target_variables
+
+```
+
+```{python}
+retirment = pd.read_csv('../csv_files/h22j3_r.csv')
+retirment_use = retirment[['HHID', 'PN', 'SJ3578']]
+retirment_use['HHID'] = retirment_use['HHID'].astype(str)
+retirment_use['PN'] = retirment_use['PN'].astype(str)
+retirment_use['HHID + PN'] = retirment_use['HHID'] + retirment_use['PN']
+retirment_use
+```
+
+
