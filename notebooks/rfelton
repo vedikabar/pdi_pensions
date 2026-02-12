@@ -1,1 +1,129 @@
-hi. its rowan
+library(patchwork)
+library(fastDummies)
+library(tidyverse)
+library(modelsummary)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(did)
+library(plm)
+library(openxlsx)
+library(tableone)
+library(extrafont)
+library(kableExtra)
+
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
+morg08 <- read_csv("data/csv/morg08.csv")
+public08 <- morg08 |> 
+  filter(class94 %in% c( 1,2,3))
+#private, self employed, or without pay, 
+#is class94 = 4, 5,6, 7, and 8 so exclude those. 
+#Also excludes NAs
+#32,403 entries now, was 317,341
+
+public08$young <- ifelse(public08$age <= 30, 1, 0) 
+#this creates a new col, "young" and its 1 if age is equal to or less than 30
+
+sum(public08$young == 1) #5563 observations of young out of 32,403
+
+View(public08)
+
+public08IL <- morg08 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public08IL$young <- ifelse(public08IL$age <= 30, 1, 0) 
+sum(public08IL$young == 1) #147 out of 849 obs 
+(147/849)*100 #17.31449
+
+View(public08IL) #can use this to check number of obs
+
+public08NY <- morg08 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public08NY$young <- ifelse(public08NY$age <= 30, 1, 0) 
+sum(public08NY$young == 1) #249/1,449
+(249/1449)*100 #17.18427
+
+View(public08NY)
+
+public08IN <- morg08 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public08IN$young <- ifelse(public08IN$age <= 30, 1, 0) 
+sum(public08IN$young == 1) #47/395
+(47/395)*100 #11.89873
+
+View(public08IN)
+
+public08PA <- morg08 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public08PA$young <- ifelse(public08PA$age <= 30, 1, 0) 
+sum(public08PA$young == 1) #97/732
+(97/732)*100 #13.25137
+
+View(public08PA)
+
+############################################ Below is 2009 and above is 2008
+
+morg09 <- read_csv("data/csv/morg09.csv")
+
+View(public09)
+
+public09IL <- morg09 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public09IL$young <- ifelse(public09IL$age <= 30, 1, 0) 
+sum(public09IL$young == 1) #162/905 (# of young people/nobs) 
+(162/905)*100 #17.90055
+
+View(public09IL)
+
+public09NY <- morg09 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public09NY$young <- ifelse(public09NY$age <= 30, 1, 0) 
+sum(public09NY$young == 1) #251/1496
+(251/1496)*100 #16.77807
+
+View(public09NY)
+
+public09IN <- morg09 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public09IN$young <- ifelse(public09IN$age <= 30, 1, 0) 
+sum(public09IN$young == 1) #59/409
+(59/409)*100 #14.42543
+
+View(public09IN)
+
+public09PA <- morg09 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public09PA$young <- ifelse(public09PA$age <= 30, 1, 0) 
+sum(public09PA$young == 1) #128/723
+(128/723)*100 #17.70401
+
+View(public09PA)
+
+############################################ Below is 2010 and above is 2009
