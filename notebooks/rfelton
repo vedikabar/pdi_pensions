@@ -12,6 +12,11 @@ library(tableone)
 library(extrafont)
 library(kableExtra)
 
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
 morg08 <- read_csv("data/csv/morg08.csv")
 public08 <- morg08 |> 
   filter(class94 %in% c( 1,2,3))
