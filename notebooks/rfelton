@@ -127,3 +127,323 @@ sum(public09PA$young == 1) #128/723
 View(public09PA)
 
 ############################################ Below is 2010 and above is 2009
+
+############################################ Below is 2011
+library(patchwork)
+library(fastDummies)
+library(tidyverse)
+library(modelsummary)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(did)
+library(plm)
+library(openxlsx)
+library(tableone)
+library(extrafont)
+library(kableExtra)
+
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
+morg11 <- read_csv("morg11.csv")
+public11 <- morg11 |> 
+  filter(class94 %in% c( 1,2,3))
+#private, self employed, or without pay, 
+#is class94 = 4, 5,6, 7, and 8 so exclude those. 
+#Also excludes NAs
+#318334 entries now
+
+public11$young <- ifelse(public11$age <= 30, 1, 0) 
+#this creates a new col, "young" and its 1 if age is equal to or less than 30
+
+sum(public11$young == 1) #5397 observations of young out of 31492
+
+View(public11)
+
+public11IL <- morg11 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public11IL$young <- ifelse(public11IL$age <= 30, 1, 0) 
+sum(public11IL$young == 1) #144 out of 777 obs 
+(144/777)*100 #18.53282
+
+View(public11IL) #can use this to check number of obs
+
+public11NY <- morg11 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public11NY$young <- ifelse(public11NY$age <= 30, 1, 0) 
+sum(public11NY$young == 1) #215/1,397
+(215/1397)*100 #15.39012
+
+View(public11NY)
+
+public11IN <- morg11 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public11IN$young <- ifelse(public11IN$age <= 30, 1, 0) 
+sum(public11IN$young == 1) #47/336
+(47/336)*100 #13.9881
+
+View(public11IN)
+
+public11PA <- morg11 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public11PA$young <- ifelse(public11PA$age <= 30, 1, 0) 
+sum(public11PA$young == 1) #105/709
+(105/709)*100 #14.8959
+
+View(public11PA)
+
+############################################ Below is 2012
+library(patchwork)
+library(fastDummies)
+library(tidyverse)
+library(modelsummary)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(did)
+library(plm)
+library(openxlsx)
+library(tableone)
+library(extrafont)
+library(kableExtra)
+
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
+morg12 <- read_csv("morg12.csv")
+public12 <- morg12 |> 
+  filter(class94 %in% c( 1,2,3))
+#private, self employed, or without pay, 
+#is class94 = 4, 5,6, 7, and 8 so exclude those. 
+#Also excludes NAs
+#316408 entries now
+
+public12$young <- ifelse(public12$age <= 30, 1, 0) 
+#this creates a new col, "young" and its 1 if age is equal to or less than 30
+
+sum(public12$young == 1) #5074 observations of young out of 30715
+
+View(public12)
+
+public12IL <- morg12 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public12IL$young <- ifelse(public12IL$age <= 30, 1, 0) 
+sum(public12IL$young == 1) #142 out of 764 obs 
+(142/764)*100 #18.58639
+
+View(public12IL) #can use this to check number of obs
+
+public12NY <- morg12 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public12NY$young <- ifelse(public12NY$age <= 30, 1, 0) 
+sum(public12NY$young == 1) #187/1341
+(187/1341)*100 #13.94482
+
+View(public12NY)
+
+public12IN <- morg12 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public12IN$young <- ifelse(public12IN$age <= 30, 1, 0) 
+sum(public12IN$young == 1) #53/338
+(53/338)*100 #15.68047
+
+View(public12IN)
+
+public12PA <- morg12 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public12PA$young <- ifelse(public12PA$age <= 30, 1, 0) 
+sum(public12PA$young == 1) #126/693
+(126/693)*100 #18.18182
+
+View(public12PA)
+############################################ Below is 2013
+
+library(patchwork)
+library(fastDummies)
+library(tidyverse)
+library(modelsummary)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(did)
+library(plm)
+library(openxlsx)
+library(tableone)
+library(extrafont)
+library(kableExtra)
+
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
+morg13 <- read_csv("morg13.csv")
+public13 <- morg13 |> 
+  filter(class94 %in% c( 1,2,3))
+#private, self employed, or without pay, 
+#is class94 = 4, 5,6, 7, and 8 so exclude those. 
+#Also excludes NAs
+#315717 entries now
+
+public13$young <- ifelse(public13$age <= 30, 1, 0) 
+#this creates a new col, "young" and its 1 if age is equal to or less than 30
+
+sum(public13$young == 1) #4906 observations of young out of 30274
+
+View(public13)
+
+public13IL <- morg13 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public13IL$young <- ifelse(public13IL$age <= 30, 1, 0) 
+sum(public13IL$young == 1) #150 out of 789 obs 
+(150/789)*100 #19.01141
+
+View(public13IL) #can use this to check number of obs
+
+public13NY <- morg13 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public13NY$young <- ifelse(public13NY$age <= 30, 1, 0) 
+sum(public13NY$young == 1) #169/1291
+(169/1291)*100 #13.09063
+
+View(public13NY)
+
+public13IN <- morg13 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public13IN$young <- ifelse(public13IN$age <= 30, 1, 0) 
+sum(public13IN$young == 1) #55/346
+(55/346)*100 #15.89595
+
+View(public13IN)
+
+public13PA <- morg13 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public13PA$young <- ifelse(public13PA$age <= 30, 1, 0) 
+sum(public13PA$young == 1) #83/675
+(83/675)*100 #12.2963
+
+View(public13PA)
+
+############################################ Below is 2014
+library(patchwork)
+library(fastDummies)
+library(tidyverse)
+library(modelsummary)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(did)
+library(plm)
+library(openxlsx)
+library(tableone)
+library(extrafont)
+library(kableExtra)
+
+#here is my code for the share of young workers by state, you should be able to 
+#just copy and paste into R and continue. pls update the table as you go 
+#though so we aren't work simultaneouly without knowing it. 
+
+
+morg14 <- read_csv("morg14.csv")
+public14 <- morg14 |> 
+  filter(class94 %in% c( 1,2,3))
+#private, self employed, or without pay, 
+#is class94 = 4, 5,6, 7, and 8 so exclude those. 
+#Also excludes NAs
+#317056 entries now
+
+public14$young <- ifelse(public14$age <= 30, 1, 0) 
+#this creates a new col, "young" and its 1 if age is equal to or less than 30
+
+sum(public14$young == 1) #4899 observations of young out of 29732
+
+View(public14)
+
+public14IL <- morg14 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(33))
+#now restrict by state, IL = 33
+
+public14IL$young <- ifelse(public14IL$age <= 30, 1, 0) 
+sum(public14IL$young == 1) #30 out of 185 obs 
+(30/185)*100 #16.21622
+
+View(public14IL) #can use this to check number of obs
+
+public14NY <- morg14 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(21))
+#now restrict by state, NY = 21
+
+public14NY$young <- ifelse(public14NY$age <= 30, 1, 0) 
+sum(public14NY$young == 1) #42/328
+(42/328)*100 #12.80488
+
+View(public14NY)
+
+public14IN <- morg14 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(32))
+#now restrict by state, Indiana = 32
+
+public14IN$young <- ifelse(public14IN$age <= 30, 1, 0) 
+sum(public14IN$young == 1) #9/92
+(9/92)*100 #9.782609
+
+View(public14IN)
+
+public14PA <- morg14 |> 
+  filter(class94 %in% c( 1,2,3)) |>
+  filter(state %in% c(23))
+#now restrict by state, PA = 23
+
+public14PA$young <- ifelse(public14PA$age <= 30, 1, 0) 
+sum(public14PA$young == 1) #24/151
+(24/151)*100 #15.89404
+
+View(public14PA)
+
+############################################ Below is 2015
+
+
