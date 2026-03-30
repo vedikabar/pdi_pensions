@@ -1,0 +1,161 @@
+from pathlib import Path
+import sys
+import pandas as pd
+
+
+# -----------------------------
+# CONFIG
+# -----------------------------
+DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
+
+YEAR_PAIRS = [
+    (2013, 2014),
+    (2014, 2015)
+]
+
+
+# -----------------------------
+# EXISTING FUNCTIONS (UNCHANGED)
+# -----------------------------
+def load_morg(path: Path, year: int) -> pd.DataFrame:
+    if not path.exists():
+        print(f"Skipping {year}: file not found -> {path.name}")
+        return None
+
+    print(f"Loading {path} ...", flush=True)
+    df = pd.read_csv(path, low_memory=False)
+    df.columns = df.columns.str.lower().str.strip()
+
+    if "state" not in df.columns and "stfips" in df.columns:
+        df["state"] = df["stfips"]
+
+    required_basic = ["hhid", "hhnum", "lineno", "intmonth", "minsamp", "sex", "race"]
+    missing = [c for c in required_basic if c not in df.columns]
+    if missing:
+        print(f"Skipping {path.name}: missing columns {missing}")
+        return None
+
+    for col in ["hhid", "hhnum", "lineno", "intmonth", "state"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.strip()
+
+    for col in ["minsamp", "sex", "race"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    df["year_file"] = year
+    print(f"  {len(df):,} records loaded.")
+    return df
+
+
+def restrict_to_morg(df: pd.DataFrame) -> pd.DataFrame:
+    before = len(df)
+    df = df[df["minsamp"].isin([4, 8])].copy()
+    print(f"  After minsamp filter: {len(df):,} (dropped {before - len(df):,})")
+    return df
+
+
+def build_rename_map(df: pd.DataFrame, suffix: str, merge_keys: list[str]) -> dict:
+    rename = {}
+    for col in df.columns:
+        if col not in merge_keys and col not in ["minsamp", "year_file"]:
+            rename[col] = f"{col}{suffix}"
+    return rename
+
+
+def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
+    merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "state"]
+
+    pairs = [
+        (df_t[df_t["minsamp"] == 4].copy(), df_t1[df_t1["minsamp"] == 8].copy(), "MIS4_to_MIS8"),
+        (df_t[df_t["minsamp"] == 8].copy(), df_t1[df_t1["minsamp"] == 4].copy(), "MIS8_to_MIS4"),
+    ]
+
+    out = []
+    for t_df, t1_df, label in pairs:
+        t_df = t_df.rename(columns=build_rename_map(t_df, "_t", merge_keys))
+        t1_df = t1_df.rename(columns=build_rename_map(t1_df, "_t1", merge_keys))
+
+        merged = pd.merge(
+            t_df,
+            t1_df,
+            on=merge_keys,
+            how="inner",
+        )
+        merged["pair_type"] = label
+
+        print(
+            f"[{label}] {len(merged):,} matches "
+            f"({len(t_df):,} vs {len(t1_df):,})"
+        )
+        out.append(merged)
+
+    if not out:
+        return pd.DataFrame()
+
+    return pd.concat(out, ignore_index=True)
+
+
+def apply_sra_filter(df: pd.DataFrame):
+    sex_mismatch = df["sex_t"] != df["sex_t1"]
+    race_mismatch = df["race_t"] != df["race_t1"]
+
+    invalid_mask = sex_mismatch | race_mismatch
+
+    valid = df.loc[~invalid_mask].copy()
+    invalid = df.loc[invalid_mask].copy()
+
+    return valid, invalid
+
+
+# -----------------------------
+# LOOP OVER YEARS
+# -----------------------------
+def main():
+
+    for y0, y1 in YEAR_PAIRS:
+
+        print("\n" + "=" * 80)
+        print(f"PROCESSING {y0}-{y1}")
+        print("=" * 80)
+
+        # Build filenames like morg08.csv, morg09.csv
+        f0 = DATA_DIR / f"morg{str(y0)[-2:]}.csv"
+        f1 = DATA_DIR / f"morg{str(y1)[-2:]}.csv"
+
+        df0 = load_morg(f0, y0)
+        df1 = load_morg(f1, y1)
+
+        if df0 is None or df1 is None:
+            print(f"Skipping pair {y0}-{y1}")
+            continue
+
+        print("\nStep 2: Restrict to outgoing rotation groups")
+        df0 = restrict_to_morg(df0)
+        df1 = restrict_to_morg(df1)
+
+        print("\nStep 3: Merge")
+        merged = create_panel(df0, df1)
+
+        if merged.empty:
+            print(f"No matches for {y0}-{y1}")
+            continue
+
+        print(f"Total matches: {len(merged):,}")
+
+        print("\nStep 4: Apply sex/race filter")
+        valid, invalid = apply_sra_filter(merged)
+
+        print(f"Valid matches: {len(valid):,}")
+        print(f"Rejected matches: {len(invalid):,}")
+
+        # Save
+        out_file = DATA_DIR / f"merged_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
+        valid.to_csv(out_file, index=False)
+
+        print(f"Saved: {out_file.name}")
+
+    print("\nDONE with all year pairs.")
+
+
+if __name__ == "__main__":
+    main()
