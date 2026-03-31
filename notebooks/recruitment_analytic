@@ -45,8 +45,8 @@ print(f"After sex/race filter: {len(df):,}")
 # 2. Illinois + Controls only
 # -----------------------------
 df = df[
-    (df["stfips_t"].any([17, 18, 36, 42])) &
-    (df["stfips_t1"].any([17, 18, 36, 42]))
+    (df["stfips_t"].isin([17, 18, 36, 42])) &
+    (df["stfips_t1"].isin([17, 18, 36, 42]))
 ].copy()
 
 #17 is the STFIPS code for Illinois
