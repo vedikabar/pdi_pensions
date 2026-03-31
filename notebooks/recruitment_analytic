@@ -67,10 +67,10 @@ print(f"After public-at-t filter: {len(df):,}")
 # Create outcome variables
 # -----------------------------
 
-# stayed in public
+# stayed in non public
 df["stayed_non_public"] = df["class94_t1"].isin(NON_PUBLIC_CODES)
 
-# exited public
+# exited non public
 df["exited_non_public"] = (
     df["class94_t"].isin(NON_PUBLIC_CODES) &
     ~df["class94_t1"].isin(NON_PUBLIC_CODES)
