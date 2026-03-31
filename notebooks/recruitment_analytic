@@ -1,7 +1,7 @@
 import pandas as pd
 
 INPUT_FILE = "/Users/morganwalker/Downloads/merged_morg_0809.csv"
-OUTPUT_FILE = "analytic_sample_0809_controlsandil_non_public_t.csv"
+OUTPUT_FILE = "/Users/morganwalker/Downloads/analytic_sample_0809_controlsandil_non_public_t.csv"
 
 # -----------------------------
 # Load data
