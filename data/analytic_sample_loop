@@ -17,7 +17,7 @@ YEAR_PAIRS = [
     (2014, 2015),
 ]
 
-PUBLIC_CODES = [1, 2, 3]   # federal, state, local
+NON_PUBLIC_CODES = [1, 4, 5, 6, 7, 8]   # federal, state, local
 ILLINOIS_FIPS = 17
 
 
@@ -88,7 +88,7 @@ def process_pair(y0: int, y1: int) -> None:
     print(f"After Illinois-at-t filter: {n_il:,} kept, {n_sr - n_il:,} dropped")
 
     # 3. Public employee at baseline (time t only)
-    public_t_mask = df["class94_t"].isin(PUBLIC_CODES)
+    public_t_mask = df["class94_t"].isin(NON_PUBLIC_CODES)
     df = df[public_t_mask].copy()
     n_final = len(df)
     print(f"After public-at-t filter: {n_final:,} kept, {n_il - n_final:,} dropped")
