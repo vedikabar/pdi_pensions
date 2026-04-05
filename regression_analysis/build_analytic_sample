@@ -1,226 +1,158 @@
 import pandas as pd
 from pathlib import Path
- 
+
 # --------------------------------------------------
-# CONFIG
+# CONFIG — CHANGE THESE EACH RUN
 # --------------------------------------------------
-BASE_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/morg_data")
-CSV_DIR  = BASE_DIR / "csv"
-DATA_DIR = BASE_DIR / "analytic samples"
- 
-YEAR_PAIRS = [
-    (2008, 2009),
-    (2009, 2010),
-    (2010, 2011),
-    (2011, 2012),
-    (2012, 2013),
-]
- 
-# class94 codes
-# 1 = federal government
-# 2 = state government
-# 3 = local government
-# All other codes = private/self-employed/etc.
-STATE_LOCAL_CODES = [2, 3]   # pension-eligible public (state + local only)
-ALL_PUBLIC_CODES  = [1, 2, 3] # federal included (used only for exited_public flag)
-PRIVATE_CODES     = [4, 5, 6, 7, 8]  # wage/salary private + self-employed variants
-                                      # adjust if your coding differs
- 
-# State FIPS codes
+
+# FULL path to your merged file
+INPUT_FILE = "/Users/vedikabaradwaj/pdi_pensions/data/merged/merged_morg_0910.csv"
+
+# Where you want outputs saved
+OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
+
+# Year pair (just for labeling outputs)
+Y0 = 2009
+Y1 = 2010
+
+
+# --------------------------------------------------
+# CONSTANTS
+# --------------------------------------------------
+
+STATE_LOCAL_CODES = [2, 3]    # state + local ONLY (exclude federal)
+ALL_PUBLIC_CODES  = [1, 2, 3]
+PRIVATE_CODES     = [4, 5, 6, 7, 8]
+
 STATE_FIPS = {
-    "illinois":     17,   # treatment state
-    "pennsylvania": 42,   # control state
-    "new_york":     36,   # control state
-    "indiana":      18,   # control state
+    "illinois":     17,
+    "pennsylvania": 42,
+    "new_york":     36,
+    "indiana":      18,
 }
+
 TREATMENT_FIPS = STATE_FIPS["illinois"]
 ALL_FIPS       = set(STATE_FIPS.values())
- 
+
+
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------
-def pair_tag(y0: int, y1: int) -> str:
+
+def pair_tag(y0, y1):
     return f"{str(y0)[-2:]}{str(y1)[-2:]}"
- 
-def input_filename(y0: int, y1: int) -> str:
-    return str(CSV_DIR / f"merged_morg_{pair_tag(y0, y1)}.csv")
- 
-def validate_columns(df: pd.DataFrame, fname: str) -> None:
+
+def validate_columns(df):
     required_cols = [
-        "sex_t",     "sex_t1",
-        "race_t",    "race_t1",
-        "stfips_t",  "stfips_t1",
+        "sex_t", "sex_t1",
+        "race_t", "race_t1",
+        "stfips_t", "stfips_t1",
         "class94_t", "class94_t1",
     ]
     missing = [c for c in required_cols if c not in df.columns]
     if missing:
-        raise ValueError(f"{fname} is missing required columns: {missing}")
- 
-def load_and_clean(y0: int, y1: int) -> pd.DataFrame | None:
-    """Load a merged CSV, coerce key columns, return None if file missing."""
-    in_path = Path(input_filename(y0, y1))  # absolute path — do not join with DATA_DIR
-    if not in_path.exists():
-        print(f"  Skipping {y0}-{y1}: file not found -> {in_path.name}")
-        return None
- 
-    print(f"\n{'=' * 70}")
-    print(f"Processing {y0}-{y1}: {in_path.name}")
-    print(f"{'=' * 70}")
- 
-    df = pd.read_csv(in_path, low_memory=False)
+        raise ValueError(f"Missing required columns: {missing}")
+
+def load_and_clean():
+    print(f"\nProcessing file: {INPUT_FILE}")
+
+    df = pd.read_csv(INPUT_FILE, low_memory=False)
     df.columns = df.columns.str.lower().str.strip()
-    validate_columns(df, in_path.name)
- 
+
+    validate_columns(df)
+
     for col in ["stfips_t", "stfips_t1", "class94_t", "class94_t1"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
- 
-    print(f"  Loaded rows: {len(df):,}")
+
+    print(f"Loaded rows: {len(df):,}")
     return df
- 
-def filter_sex_race(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop rows where sex or race is inconsistent across periods."""
+
+def filter_sex_race(df):
     mask = (df["sex_t"] == df["sex_t1"]) & (df["race_t"] == df["race_t1"])
-    out  = df[mask].copy()
-    print(f"  After sex/race consistency filter: {len(out):,} kept "
-          f"({len(df) - len(out):,} dropped)")
+    out = df[mask].copy()
+    print(f"After sex/race filter: {len(out):,}")
     return out
- 
-def add_state_label(df: pd.DataFrame) -> pd.DataFrame:
-    """Add human-readable state label for time-t state."""
+
+def add_state_label(df):
     inv = {v: k for k, v in STATE_FIPS.items()}
     df["state_t"] = df["stfips_t"].map(inv)
     df["illinois"] = (df["stfips_t"] == TREATMENT_FIPS).astype(int)
     return df
- 
+
+
 # --------------------------------------------------
-# SAMPLE 1 — RETENTION
-#   Base population: state/local public workers in treatment + control states at t
-#   Outcome: still in state/local public sector at t+1
+# RETENTION SAMPLE
 # --------------------------------------------------
-def build_retention_sample(df: pd.DataFrame, y0: int, y1: int) -> pd.DataFrame:
-    """
-    Keep workers who are in state/local government (class94 = 2 or 3)
-    in Illinois, Pennsylvania, New York, or Indiana at time t.
-    Outcome variable captures whether they remained in state/local govt at t+1.
-    """
-    n0 = len(df)
- 
-    # Filter to treatment + control states at t
-    state_mask = df["stfips_t"].isin(ALL_FIPS)
-    df = df[state_mask].copy()
-    print(f"  [Retention] After state-at-t filter: {len(df):,} kept "
-          f"({n0 - len(df):,} dropped)")
- 
-    # Filter to state/local public workers at t (pension-eligible only)
-    pub_mask = df["class94_t"].isin(STATE_LOCAL_CODES)
-    df = df[pub_mask].copy()
-    print(f"  [Retention] After state/local-public-at-t filter: {len(df):,} kept")
- 
-    # ---- Outcome variables ----
-    df["year_t"]  = y0
-    df["year_t1"] = y1
-    df["pair"]    = f"{y0}-{y1}"
- 
-    # Stayed in state/local public sector at t+1
+
+def build_retention_sample(df):
+    df = df[df["stfips_t"].isin(ALL_FIPS)].copy()
+    df = df[df["class94_t"].isin(STATE_LOCAL_CODES)].copy()
+
+    df["year_t"]  = Y0
+    df["year_t1"] = Y1
+    df["pair"]    = f"{Y0}-{Y1}"
+
     df["stayed_state_local"] = df["class94_t1"].isin(STATE_LOCAL_CODES).astype(int)
- 
-    # Exited state/local sector entirely (may have gone federal, private, NLF, etc.)
     df["exited_state_local"] = (~df["class94_t1"].isin(STATE_LOCAL_CODES)).astype(int)
- 
-    # Where did they go? (for descriptive breakdowns)
-    df["moved_to_federal"]  = (df["class94_t1"] == 1).astype(int)
-    df["moved_to_private"]  = df["class94_t1"].isin(PRIVATE_CODES).astype(int)
-    df["moved_to_nlf_unemp"] = (
-        ~df["class94_t1"].isin(ALL_PUBLIC_CODES) &
-        ~df["class94_t1"].isin(PRIVATE_CODES)
-    ).astype(int)
- 
-    # Changed class94 sub-category (e.g., state -> local or vice versa)
-    df["switched_class94"] = (df["class94_t"] != df["class94_t1"]).astype(int)
- 
-    # Stayed in same state at t+1 (useful robustness check)
-    df["same_state_t1"] = (df["stfips_t"] == df["stfips_t1"]).astype(int)
- 
+
+    df["moved_to_federal"]   = (df["class94_t1"] == 1).astype(int)
+    df["moved_to_private"]   = df["class94_t1"].isin(PRIVATE_CODES).astype(int)
+
     df["analytic_sample"] = "retention"
+
     return df
- 
+
+
 # --------------------------------------------------
-# SAMPLE 2 — RECRUITMENT
-#   Base population: private-sector / non-state-local workers in
-#                    treatment + control states at t
-#   Outcome: entered state/local public sector at t+1
+# RECRUITMENT SAMPLE
 # --------------------------------------------------
-def build_recruitment_sample(df: pd.DataFrame, y0: int, y1: int) -> pd.DataFrame:
-    """
-    Keep workers NOT in state/local government at time t
-    (private, self-employed, federal, non-labor-force) in the four states.
-    Outcome variable captures whether they entered state/local govt at t+1.
-    """
-    n0 = len(df)
- 
-    # Filter to treatment + control states at t
-    # NOTE: we use stfips_t (where they were at baseline)
-    state_mask = df["stfips_t"].isin(ALL_FIPS)
-    df = df[state_mask].copy()
-    print(f"  [Recruitment] After state-at-t filter: {len(df):,} kept "
-          f"({n0 - len(df):,} dropped)")
- 
-    # Exclude state/local public workers at t (they belong in retention sample)
-    not_pub_mask = ~df["class94_t"].isin(STATE_LOCAL_CODES)
-    df = df[not_pub_mask].copy()
-    print(f"  [Recruitment] After excluding state/local-at-t: {len(df):,} kept")
- 
-    # ---- Outcome variables ----
-    df["year_t"]  = y0
-    df["year_t1"] = y1
-    df["pair"]    = f"{y0}-{y1}"
- 
-    # Joined state/local public sector at t+1
+
+def build_recruitment_sample(df):
+    df = df[df["stfips_t"].isin(ALL_FIPS)].copy()
+
+    # EXCLUDE state/local public at t
+    df = df[~df["class94_t"].isin(STATE_LOCAL_CODES)].copy()
+
+    df["year_t"]  = Y0
+    df["year_t1"] = Y1
+    df["pair"]    = f"{Y0}-{Y1}"
+
+    # ONLY count entry into state/local (NOT federal)
     df["joined_state_local"] = df["class94_t1"].isin(STATE_LOCAL_CODES).astype(int)
- 
-    # Where they started (descriptive)
-    df["from_federal"]  = (df["class94_t"] == 1).astype(int)
-    df["from_private"]  = df["class94_t"].isin(PRIVATE_CODES).astype(int)
-    df["from_nlf_unemp"] = (
-        ~df["class94_t"].isin(ALL_PUBLIC_CODES) &
-        ~df["class94_t"].isin(PRIVATE_CODES)
-    ).astype(int)
- 
-    # Stayed in same state at t+1
-    df["same_state_t1"] = (df["stfips_t"] == df["stfips_t1"]).astype(int)
- 
+
+    df["from_federal"] = (df["class94_t"] == 1).astype(int)
+    df["from_private"] = df["class94_t"].isin(PRIVATE_CODES).astype(int)
+
     df["analytic_sample"] = "recruitment"
+
     return df
- 
+
+
 # --------------------------------------------------
-# MAIN PROCESSING LOOP
+# MAIN
 # --------------------------------------------------
-def process_pair(y0: int, y1: int) -> None:
-    df_raw = load_and_clean(y0, y1)
-    if df_raw is None:
-        return
- 
-    df_clean = filter_sex_race(df_raw)
-    df_clean = add_state_label(df_clean)
- 
-    tag = pair_tag(y0, y1)
- 
-    # ---- Retention sample ----
-    df_ret = build_retention_sample(df_clean.copy(), y0, y1)
-    out_ret = DATA_DIR / f"analytic_sample_{tag}_retention.csv"
-    df_ret.to_csv(out_ret, index=False)
-    print(f"  [Retention]   Saved {out_ret.name}  ({len(df_ret):,} rows)")
- 
-    # ---- Recruitment sample ----
-    df_rec = build_recruitment_sample(df_clean.copy(), y0, y1)
-    out_rec = DATA_DIR / f"analytic_sample_{tag}_recruitment.csv"
-    df_rec.to_csv(out_rec, index=False)
-    print(f"  [Recruitment] Saved {out_rec.name}  ({len(df_rec):,} rows)")
- 
+
 def main():
-    for y0, y1 in YEAR_PAIRS:
-        process_pair(y0, y1)
-    print(f"\nDone with all available year-pair files.")
- 
+    df = load_and_clean()
+    df = filter_sex_race(df)
+    df = add_state_label(df)
+
+    tag = pair_tag(Y0, Y1)
+
+    # Retention
+    df_ret = build_retention_sample(df.copy())
+    out_ret = OUTPUT_DIR / f"analytic_sample_{tag}_retention.csv"
+    df_ret.to_csv(out_ret, index=False)
+    print(f"Saved retention → {out_ret}")
+
+    # Recruitment
+    df_rec = build_recruitment_sample(df.copy())
+    out_rec = OUTPUT_DIR / f"analytic_sample_{tag}_recruitment.csv"
+    df_rec.to_csv(out_rec, index=False)
+    print(f"Saved recruitment → {out_rec}")
+
+    print("\nDone.")
+
+
 if __name__ == "__main__":
     main()
