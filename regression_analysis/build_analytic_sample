@@ -6,7 +6,7 @@ from pathlib import Path
 # --------------------------------------------------
 
 # FULL path to your merged file
-INPUT_FILE = "/Users/vedikabaradwaj/pdi_pensions/data/merged/merged_morg_0910.csv"
+INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_0910.csv"
 
 # Where you want outputs saved
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")

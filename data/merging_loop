@@ -7,6 +7,7 @@ import pandas as pd
 # CONFIG
 # -----------------------------
 DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
+OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
 
 YEAR_PAIRS = [
     (2013, 2014),
@@ -149,10 +150,9 @@ def main():
         print(f"Rejected matches: {len(invalid):,}")
 
         # Save
-        out_file = DATA_DIR / f"merged_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
+        out_file = OUTPUT_DIR / f"merged_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
         valid.to_csv(out_file, index=False)
-
-        print(f"Saved: {out_file.name}")
+        print(f"Saved: {out_file}")
 
     print("\nDONE with all year pairs.")
 
