@@ -1,52 +1,61 @@
 from pathlib import Path
-import sys
 import pandas as pd
 
 
-# -----------------------------
-# CONFIG
-# -----------------------------
 DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
 
 YEAR_PAIRS = [
-    (2009, 2010),
-    (2010, 2011),
-    (2011, 2012),
-    (2012, 2013)
+    (2013, 2014),
+    (2014, 2015),
 ]
 
 
-# -----------------------------
-# EXISTING FUNCTIONS (UNCHANGED)
-# -----------------------------
 def load_morg(path: Path, year: int) -> pd.DataFrame:
     if not path.exists():
         print(f"Skipping {year}: file not found -> {path.name}")
         return None
 
     print(f"Loading {path} ...", flush=True)
-    df = pd.read_csv(path, low_memory=False)
+
+    # Read key merge columns as strings immediately
+    df = pd.read_csv(
+        path,
+        low_memory=False,
+        dtype={
+            "hhid": "string",
+            "hhnum": "string",
+            "lineno": "string",
+            "intmonth": "string",
+            "stfips": "string",
+            "state": "string",
+        }
+    )
+
     df.columns = df.columns.str.lower().str.strip()
 
-    if "state" not in df.columns and "stfips" in df.columns:
-        df["state"] = df["stfips"]
+    # Prefer stfips over state
+    if "stfips" not in df.columns and "state" in df.columns:
+        df["stfips"] = df["state"]
 
-    required_basic = ["hhid", "hhnum", "lineno", "intmonth", "minsamp", "sex", "race"]
+    required_basic = ["hhid", "hhnum", "lineno", "intmonth", "minsamp", "sex", "race", "stfips"]
     missing = [c for c in required_basic if c not in df.columns]
     if missing:
         print(f"Skipping {path.name}: missing columns {missing}")
         return None
 
-    for col in ["hhid", "hhnum", "lineno", "intmonth", "state"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.strip()
+    for col in ["hhid", "hhnum", "lineno", "intmonth", "stfips"]:
+        df[col] = df[col].astype("string").str.strip()
 
     for col in ["minsamp", "sex", "race"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df["year_file"] = year
+
     print(f"  {len(df):,} records loaded.")
+    print("  minsamp counts:")
+    print(df["minsamp"].value_counts(dropna=False).sort_index())
+
     return df
 
 
@@ -65,8 +74,29 @@ def build_rename_map(df: pd.DataFrame, suffix: str, merge_keys: list[str]) -> di
     return rename
 
 
+def debug_overlap(t_df: pd.DataFrame, t1_df: pd.DataFrame, merge_keys: list[str], label: str):
+    print(f"\nDEBUG: {label}")
+    print("Merge keys:", merge_keys)
+
+    # Create composite key just to inspect overlap
+    key_t = t_df[merge_keys].astype(str).agg("|".join, axis=1)
+    key_t1 = t1_df[merge_keys].astype(str).agg("|".join, axis=1)
+
+    overlap = len(set(key_t).intersection(set(key_t1)))
+
+    print(f"  t rows: {len(t_df):,}")
+    print(f"  t1 rows: {len(t1_df):,}")
+    print(f"  unique composite keys in t: {key_t.nunique():,}")
+    print(f"  unique composite keys in t1: {key_t1.nunique():,}")
+    print(f"  overlapping composite keys: {overlap:,}")
+
+    for k in merge_keys:
+        print(f"  Sample {k} values t:", t_df[k].dropna().astype(str).head(3).tolist())
+        print(f"  Sample {k} values t1:", t1_df[k].dropna().astype(str).head(3).tolist())
+
+
 def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
-    merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "state"]
+    merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "stfips"]
 
     pairs = [
         (df_t[df_t["minsamp"] == 4].copy(), df_t1[df_t1["minsamp"] == 8].copy(), "MIS4_to_MIS8"),
@@ -75,6 +105,8 @@ def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
 
     out = []
     for t_df, t1_df, label in pairs:
+        debug_overlap(t_df, t1_df, merge_keys, label)
+
         t_df = t_df.rename(columns=build_rename_map(t_df, "_t", merge_keys))
         t1_df = t1_df.rename(columns=build_rename_map(t1_df, "_t1", merge_keys))
 
@@ -86,10 +118,7 @@ def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
         )
         merged["pair_type"] = label
 
-        print(
-            f"[{label}] {len(merged):,} matches "
-            f"({len(t_df):,} vs {len(t1_df):,})"
-        )
+        print(f"[{label}] {len(merged):,} matches ({len(t_df):,} vs {len(t1_df):,})")
         out.append(merged)
 
     if not out:
@@ -110,18 +139,12 @@ def apply_sra_filter(df: pd.DataFrame):
     return valid, invalid
 
 
-# -----------------------------
-# LOOP OVER YEARS
-# -----------------------------
 def main():
-
     for y0, y1 in YEAR_PAIRS:
-
         print("\n" + "=" * 80)
         print(f"PROCESSING {y0}-{y1}")
         print("=" * 80)
 
-        # Build filenames like morg08.csv, morg09.csv
         f0 = DATA_DIR / f"morg{str(y0)[-2:]}.csv"
         f1 = DATA_DIR / f"morg{str(y1)[-2:]}.csv"
 
@@ -151,12 +174,11 @@ def main():
         print(f"Valid matches: {len(valid):,}")
         print(f"Rejected matches: {len(invalid):,}")
 
-        # Save
         out_file = OUTPUT_DIR / f"merged_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
         valid.to_csv(out_file, index=False)
         print(f"Saved: {out_file}")
 
-    print("\nDONE with all year pairs.")
+    print("\nDONE.")
 
 
 if __name__ == "__main__":
