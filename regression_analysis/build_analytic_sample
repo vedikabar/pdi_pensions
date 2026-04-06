@@ -6,14 +6,14 @@ from pathlib import Path
 # --------------------------------------------------
 
 # FULL path to your merged file
-INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_0910.csv"
+INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_1011.csv"
 
 # Where you want outputs saved
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
 
 # Year pair (just for labeling outputs)
-Y0 = 2009
-Y1 = 2010
+Y0 = 2010
+Y1 = 2011
 
 
 # --------------------------------------------------
