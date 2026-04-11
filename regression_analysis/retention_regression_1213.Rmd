@@ -44,7 +44,10 @@ COV_TYPE <- "HC1"
 
 ```{r load-data, message=FALSE}
 # Load the data
-df <- read_csv(DATA_FILE, show_col_types = FALSE)
+dfinitial <- read_csv(DATA_FILE, show_col_types = FALSE)
+
+df <- dfinitial |>
+  filter(stfips_t != 36 & stfips_t1 != 36)
 
 cat("Shape:", nrow(df), "rows x", ncol(df), "cols\n")
 
