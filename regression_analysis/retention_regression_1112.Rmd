@@ -1,0 +1,176 @@
+---
+title: "Retention Regression Template"
+output: html_document
+---
+
+#This notebook is a **template** for running the pair-specific Illinois-vs-control regression for the **Retention** analytic sample.
+
+## What this notebook assumes
+
+-   You are running a regression for **one adjacent year pair at a time**
+-   Each row in the file already represents a **transition from year t to year t+1**
+-   The dependent variable is already constructed in the analytic sample:
+    -   `stayed_state_local`
+-   The key treatment indicator is:
+    -   `illinois` = 1 for Illinois, 0 for control states
+
+## Interpretation
+
+Because the file is already constructed at the transition level, this notebook estimates a **cross-sectional regression on a transition outcome** for a single year pair. This is your **pair-specific DiD-style regression** for the Retention margin.
+
+------------------------------------------------------------------------
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(estimatr)  # for lm_robust() with HC1 SEs
+
+# EDIT THIS when you switch to a new pair
+DATA_FILE <- "analytic_sample_1112_retention.csv"
+
+# Main variable choices
+DV            <- "stayed_state_local"
+TREATMENT_VAR <- "illinois"
+PAIR_VAR      <- "pair"
+WEIGHT_VAR    <- "weight_t"
+
+# Baseline controls (as character strings for formula building)
+BASE_CONTROLS <- c("age_t", "factor(sex_t)", "factor(race_t)", "factor(grade92_t)")
+
+# Robust SE choice (HC1 matches statsmodels default)
+COV_TYPE <- "HC1"
+```
+
+------------------------------------------------------------------------
+
+```{r load-data, message=FALSE}
+# Load the data
+df <- read_csv(DATA_FILE, show_col_types = FALSE)
+
+cat("Shape:", nrow(df), "rows x", ncol(df), "cols\n")
+
+cat("\nPair values:\n")
+print(table(df[[PAIR_VAR]], useNA = "always"))
+
+cat("\nColumns:\n")
+print(names(df))
+```
+
+------------------------------------------------------------------------
+
+```{r validate}
+# Data Validation
+required_cols <- c(DV, TREATMENT_VAR, PAIR_VAR, WEIGHT_VAR)
+missing <- setdiff(required_cols, names(df))
+
+if (length(missing) > 0) {
+  stop(paste("Dataset is missing required columns:", paste(missing, collapse = ", ")))
+}
+
+cat("All required columns are present.\n")
+```
+
+------------------------------------------------------------------------
+
+```{r descriptives, message=FALSE, warning=FALSE}
+# Quick descriptive checks
+
+cat("\nUnweighted mean of DV by Illinois:\n")
+df %>%
+  group_by(.data[[TREATMENT_VAR]]) %>%
+  summarise(mean_dv = mean(.data[[DV]], na.rm = TRUE)) %>%
+  print()
+
+cat("\nWeighted mean of DV by Illinois:\n")
+df %>%
+  filter(!is.na(.data[[DV]]), !is.na(.data[[WEIGHT_VAR]])) %>%
+  group_by(.data[[TREATMENT_VAR]]) %>%
+  summarise(
+    weighted_mean = weighted.mean(.data[[DV]], w = .data[[WEIGHT_VAR]], na.rm = TRUE)
+  ) %>%
+  print()
+
+if ("state_t" %in% names(df)) {
+  cat("\nUnweighted mean of DV by state_t:\n")
+  df %>%
+    group_by(state_t) %>%
+    summarise(mean_dv = mean(.data[[DV]], na.rm = TRUE)) %>%
+    print()
+}
+```
+
+------------------------------------------------------------------------
+
+## Baseline specification
+
+The default model in this notebook is a weighted Linear Probability Model:
+
+$$Y_i = \alpha + \beta \, \text{Illinois}_i + X_i'\theta + \varepsilon_i$$
+
+where: - $Y_i$ is `stayed_state_local` - the coefficient on `illinois` is the pair-specific Illinois-control difference for the **Retention** outcome
+
+------------------------------------------------------------------------
+
+```{r build-formula}
+build_formula <- function(dv, controls = NULL) {
+  rhs <- paste(c(TREATMENT_VAR, controls), collapse = " + ")
+  as.formula(paste(dv, "~", rhs))
+}
+
+formula <- build_formula(DV, BASE_CONTROLS)
+print(formula)
+```
+
+------------------------------------------------------------------------
+
+```{r run-lpm, warning=FALSE}
+run_weighted_lpm <- function(data, dv, controls = NULL,
+                              weight_var = WEIGHT_VAR, cov_type = COV_TYPE) {
+  controls <- controls %||% character(0)
+
+  # Strip factor() wrappers to identify raw column names for NA dropping
+  raw_controls <- gsub("^factor\\((.+)\\)$", "\\1", controls)
+  needed_cols  <- unique(c(dv, TREATMENT_VAR, weight_var, raw_controls))
+  needed_cols  <- intersect(needed_cols, names(data))
+
+  before <- nrow(data)
+  data   <- data %>% drop_na(all_of(needed_cols))
+  after  <- nrow(data)
+  cat(sprintf("Dropped %d rows due to missing values; %d rows remain.\n",
+              before - after, after))
+
+  formula <- build_formula(dv, controls)
+
+  # lm_robust() from {estimatr} provides HC-robust SEs natively
+  result <- lm_robust(
+    formula  = formula,
+    data     = data,
+    weights  = data[[weight_var]],
+    se_type  = cov_type
+  )
+
+  print(summary(result))
+  result
+}
+
+lpm_result <- run_weighted_lpm(df, DV, BASE_CONTROLS)
+```
+
+------------------------------------------------------------------------
+
+```{r result-table}
+result_table <- tibble(
+  term    = "illinois",
+  coef    = coef(lpm_result)[["illinois"]],
+  std_err = lpm_result$std.error[["illinois"]],
+  p_value = lpm_result$p.value[["illinois"]],
+  nobs    = lpm_result$nobs
+)
+
+result_table
+
+install.packages("writexl")
+library(writexl)
+write_xlsx(result_table, "RetentionRegression1112.xlsx")
+
+
+```
