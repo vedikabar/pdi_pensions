@@ -5,35 +5,28 @@ from pathlib import Path
 # CONFIG — CHANGE THESE EACH RUN
 # --------------------------------------------------
 
-# FULL path to your merged file
-INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_1314.csv"
-
-# Where you want outputs saved
+INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_1415.csv"
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
-
-# Year pair (just for labeling outputs)
-Y0 = 2013
-Y1 = 2014
-
+Y0 = 2014
+Y1 = 2015
 
 # --------------------------------------------------
 # CONSTANTS
 # --------------------------------------------------
 
-STATE_LOCAL_CODES = [2, 3]    # state + local ONLY (exclude federal)
+STATE_LOCAL_CODES = [2, 3]
 ALL_PUBLIC_CODES  = [1, 2, 3]
 PRIVATE_CODES     = [4, 5, 6, 7, 8]
 
 STATE_FIPS = {
-    "illinois":     17,
+    "illinois": 17,
     "pennsylvania": 42,
-    "new_york":     36,
-    "indiana":      18,
+    "new_york": 36,
+    "indiana": 18,
 }
 
 TREATMENT_FIPS = STATE_FIPS["illinois"]
-ALL_FIPS       = set(STATE_FIPS.values())
-
+ALL_FIPS = set(STATE_FIPS.values())
 
 # --------------------------------------------------
 # HELPERS
@@ -46,7 +39,7 @@ def validate_columns(df):
     required_cols = [
         "sex_t", "sex_t1",
         "race_t", "race_t1",
-        "stfips_t", "stfips_t1",
+        "stfips",
         "class94_t", "class94_t1",
     ]
     missing = [c for c in required_cols if c not in df.columns]
@@ -61,7 +54,7 @@ def load_and_clean():
 
     validate_columns(df)
 
-    for col in ["stfips_t", "stfips_t1", "class94_t", "class94_t1"]:
+    for col in ["stfips", "class94_t", "class94_t1", "sex_t", "sex_t1", "race_t", "race_t1"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     print(f"Loaded rows: {len(df):,}")
@@ -75,58 +68,50 @@ def filter_sex_race(df):
 
 def add_state_label(df):
     inv = {v: k for k, v in STATE_FIPS.items()}
-    df["state_t"] = df["stfips_t"].map(inv)
-    df["illinois"] = (df["stfips_t"] == TREATMENT_FIPS).astype(int)
+    df["state"] = df["stfips"].map(inv)
+    df["illinois"] = (df["stfips"] == TREATMENT_FIPS).astype(int)
     return df
-
 
 # --------------------------------------------------
 # RETENTION SAMPLE
 # --------------------------------------------------
 
 def build_retention_sample(df):
-    df = df[df["stfips_t"].isin(ALL_FIPS)].copy()
+    df = df[df["stfips"].isin(ALL_FIPS)].copy()
     df = df[df["class94_t"].isin(STATE_LOCAL_CODES)].copy()
 
-    df["year_t"]  = Y0
+    df["year_t"] = Y0
     df["year_t1"] = Y1
-    df["pair"]    = f"{Y0}-{Y1}"
+    df["pair"] = f"{Y0}-{Y1}"
 
     df["stayed_state_local"] = df["class94_t1"].isin(STATE_LOCAL_CODES).astype(int)
     df["exited_state_local"] = (~df["class94_t1"].isin(STATE_LOCAL_CODES)).astype(int)
 
-    df["moved_to_federal"]   = (df["class94_t1"] == 1).astype(int)
-    df["moved_to_private"]   = df["class94_t1"].isin(PRIVATE_CODES).astype(int)
+    df["moved_to_federal"] = (df["class94_t1"] == 1).astype(int)
+    df["moved_to_private"] = df["class94_t1"].isin(PRIVATE_CODES).astype(int)
 
     df["analytic_sample"] = "retention"
-
     return df
-
 
 # --------------------------------------------------
 # RECRUITMENT SAMPLE
 # --------------------------------------------------
 
 def build_recruitment_sample(df):
-    df = df[df["stfips_t"].isin(ALL_FIPS)].copy()
-
-    # EXCLUDE state/local public at t
+    df = df[df["stfips"].isin(ALL_FIPS)].copy()
     df = df[~df["class94_t"].isin(STATE_LOCAL_CODES)].copy()
 
-    df["year_t"]  = Y0
+    df["year_t"] = Y0
     df["year_t1"] = Y1
-    df["pair"]    = f"{Y0}-{Y1}"
+    df["pair"] = f"{Y0}-{Y1}"
 
-    # ONLY count entry into state/local (NOT federal)
     df["joined_state_local"] = df["class94_t1"].isin(STATE_LOCAL_CODES).astype(int)
 
     df["from_federal"] = (df["class94_t"] == 1).astype(int)
     df["from_private"] = df["class94_t"].isin(PRIVATE_CODES).astype(int)
 
     df["analytic_sample"] = "recruitment"
-
     return df
-
 
 # --------------------------------------------------
 # MAIN
@@ -139,20 +124,17 @@ def main():
 
     tag = pair_tag(Y0, Y1)
 
-    # Retention
     df_ret = build_retention_sample(df.copy())
     out_ret = OUTPUT_DIR / f"analytic_sample_{tag}_retention.csv"
     df_ret.to_csv(out_ret, index=False)
     print(f"Saved retention → {out_ret}")
 
-    # Recruitment
     df_rec = build_recruitment_sample(df.copy())
     out_rec = OUTPUT_DIR / f"analytic_sample_{tag}_recruitment.csv"
     df_rec.to_csv(out_rec, index=False)
     print(f"Saved recruitment → {out_rec}")
 
     print("\nDone.")
-
 
 if __name__ == "__main__":
     main()
