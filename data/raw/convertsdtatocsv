@@ -1,18 +1,21 @@
 # ------------------------------------------------------------
-# Convert CPS MORG .dta files (morg08.dta ... morg15.dta)
-# to CSV format.
-# No modifications — pure format conversion.
+# Convert specific CPS MORG .dta files to CSV format
+# (file-by-file conversion using explicit file paths)
 # ------------------------------------------------------------
 
 from pathlib import Path
 import pandas as pd
 
-# Directories
-RAW_DIR = Path("data/raw")
-OUTPUT_DIR = Path("data/csv")
+# List of specific .dta file paths (EDIT THIS)
+DTA_FILES = [
+    Path("data/raw/morg16.dta"),
+    Path("data/raw/morg17.dta"),
+    # add more as needed
+]
 
-# Years 08–15
-YEAR_SUFFIXES = [f"{y:02d}" for y in range(8, 16)]
+# Output directory
+OUTPUT_DIR = Path("data/csv")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Optional faster reader
 try:
@@ -21,15 +24,17 @@ try:
 except ImportError:
     USE_PYREADSTAT = False
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-for y in YEAR_SUFFIXES:
-    dta_path = RAW_DIR / f"morg{y}.dta"
-    csv_path = OUTPUT_DIR / f"morg{y}.csv"
+# ------------------------------------------------------------
+# Process each file individually
+# ------------------------------------------------------------
+for dta_path in DTA_FILES:
 
     if not dta_path.exists():
         print(f"[WARNING] File not found: {dta_path}")
         continue
+
+    # Create output filename dynamically
+    csv_path = OUTPUT_DIR / f"{dta_path.stem}.csv"
 
     print(f"[INFO] Reading {dta_path}")
 
