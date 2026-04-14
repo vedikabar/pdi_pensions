@@ -6,10 +6,9 @@ DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
 
 YEAR_PAIRS = [
-    (2013, 2014),
-    (2014, 2015),
+    (2015, 2016),
+    (2016, 2017)
 ]
-
 
 def load_morg(path: Path, year: int) -> pd.DataFrame:
     if not path.exists():
