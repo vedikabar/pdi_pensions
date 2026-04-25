@@ -1,6 +1,15 @@
 from pathlib import Path
 import pandas as pd
 
+DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
+
+print("DATA_DIR exists?", DATA_DIR.exists())
+print("DATA_DIR is dir?", DATA_DIR.is_dir())
+print("Resolved path:", DATA_DIR.resolve())
+
+print("\nFiles Python sees:")
+for f in DATA_DIR.glob("*"):
+    print(repr(f.name))
 
 DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
