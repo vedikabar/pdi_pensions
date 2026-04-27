@@ -1,9 +1,14 @@
 from pathlib import Path
 import pandas as pd
 
+from pathlib import Path
+import pandas as pd
 
-DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
-OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
+from pathlib import Path
+import pandas as pd
+
+DATA_DIR = Path("/Users/vedikabaradwaj/Documents/pdi_pensions/data/csv")
+OUTPUT_DIR = Path.home() / "Downloads"
 
 YEAR_PAIRS = [
     (2015, 2016),

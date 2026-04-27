@@ -5,10 +5,10 @@ from pathlib import Path
 # CONFIG — CHANGE THESE EACH RUN
 # --------------------------------------------------
 
-INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_1415.csv"
+INPUT_FILE = "/Users/vedikabaradwaj/Downloads/merged_morg_1617.csv"
 OUTPUT_DIR = Path("/Users/vedikabaradwaj/Downloads")
-Y0 = 2014
-Y1 = 2015
+Y0 = 2016
+Y1 = 2017
 
 # --------------------------------------------------
 # CONSTANTS
