@@ -1,0 +1,2151 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# <b><center>Final Parallel Trends Check [Recruitment + Retention]
+# 
+# <b><center>Morgan Walker
+# 
+# <b><center>PDI Spring 2026 Pension Reform Project
+
+# <b><center>SECTION 1: RECRUITMENT PARALLEL TRENDS CHECK
+# 
+# 2008 - 2009
+# 
+# 2009 - 2010
+# 
+# 2010 - 2011
+# 
+# 2011 - 2012
+# 
+# 2012 - 2013
+# 
+# 2013 - 2014
+# 
+# 2014 - 2015
+# 
+# 2015 - 2016
+# 2016 - 2017
+
+# <b>Parallel Trends Check 2008-2009 [Recruitment]:
+
+# In[379]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[380]:
+
+
+analyticsampledf89 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_0809_recruitment.csv')
+analyticsampledf89.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[381]:
+
+
+analyticsampledftwo89 = analyticsampledf
+analyticsampledftwo89.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[382]:
+
+
+#list(analyticsampledftwo89.columns)
+
+
+# Below, I filtered the sample to only have ages 16 - 35. {Please note that I changed the column/variable I filtered on from 'age_t' to 'age_t1' [compared to my rough draft] so that the data I work with includes people who joined the local/state government workforce at the age of 16 or above in 2009; same for age being below 35}.
+
+# In[383]:
+
+
+analyticsampleover16for89 = analyticsampledftwo89[analyticsampledftwo89['age_t1'] >= 16]
+analyticsampleover16for89.head()
+
+
+# In[384]:
+
+
+analyticsampleover16for89.describe()
+
+
+# In[385]:
+
+
+analyticsamplefiltered89 = analyticsampleover16for89[analyticsampleover16for89['age_t1'] <= 35]
+analyticsamplefiltered89.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered89) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[386]:
+
+
+analyticsamplefiltered89.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[387]:
+
+
+analyticsamplefiltered89['weighted_public_var'] = analyticsamplefiltered89['weight_t1'] * analyticsamplefiltered89['joined_state_local']
+
+
+# In[388]:
+
+
+analyticsamplefiltered89['weighted_public_var']
+
+
+# In[389]:
+
+
+workingsample89 = analyticsamplefiltered89
+workingsample89.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period (between the ages 16 and 35, inclusive). Please also note that I am now working with the same data, but renamed it workingsample for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[390]:
+
+
+workingsample89.groupby('same_state_t1')
+workingsample89.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+# 
+# Please note that I decided to use the variable 'state_t', not 'state', or 'same_state_t1'. This is problematic for our analysis, but only using 'same_state_t1' to group our states causes us to lose employees who moved between 2008-2009 in our analysis and artificially limits our data. I chose 'state_t' as the variable instead, because even if the employee does move states between 2008-2009, the only rows included in this dataset at all are Illinois plus our control states, so while this is not a perfect analysis, it is a reasonable approximation given the data that we have.
+
+# In[391]:
+
+
+illinois_df89 = workingsample89[workingsample89['state_t'] == 'illinois']
+illinois_df89.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[392]:
+
+
+illinois_total_weight89 = illinois_df89['weight_t1'].sum()
+print (illinois_total_weight89)
+
+illinois_total_weighted_public89 = illinois_df89['weighted_public_var'].sum()
+print (illinois_total_weighted_public89)
+
+illinois_recruitment_rate89 = illinois_total_weighted_public89/illinois_total_weight89
+print (illinois_recruitment_rate89)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[393]:
+
+
+new_york_df89 = workingsample89[workingsample89['state_t'] == 'new_york']
+new_york_df89.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[394]:
+
+
+ny_total_weight89 = new_york_df89['weight_t1'].sum()
+print (ny_total_weight89)
+
+ny_total_weighted_public89 = new_york_df89['weighted_public_var'].sum()
+print (ny_total_weighted_public89)
+
+ny_recruitment_rate89 = ny_total_weighted_public89/ny_total_weight89
+print (ny_recruitment_rate89)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[395]:
+
+
+indiana_df89 = workingsample89[workingsample89['state_t'] == 'indiana']
+indiana_df89.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[396]:
+
+
+indiana_total_weight89 = indiana_df89['weight_t1'].sum()
+print (indiana_total_weight89)
+
+indiana_total_weighted_public89 = indiana_df89['weighted_public_var'].sum()
+print (indiana_total_weighted_public89)
+
+indiana_recruitment_rate89 = indiana_total_weighted_public89/indiana_total_weight89
+print (indiana_recruitment_rate89)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[397]:
+
+
+pennsylvania_df89 = workingsample89[workingsample89['state_t'] == 'pennsylvania']
+pennsylvania_df89.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[398]:
+
+
+penn_total_weight89 = pennsylvania_df89['weight_t1'].sum()
+print (indiana_total_weight89)
+
+penn_total_weighted_public89 = pennsylvania_df89['weighted_public_var'].sum()
+print (indiana_total_weighted_public89)
+
+penn_recruitment_rate89 = penn_total_weighted_public89/penn_total_weight89
+print (indiana_recruitment_rate89)
+
+
+# Below, you will find a table with the analytic sample data for just Illinois, and a table with the three control states, and not Illinois.
+
+# In[399]:
+
+
+illinois_df89 = workingsample89[workingsample89['state_t'] == 'illinois']
+illinois_df89.head()
+
+
+# In[400]:
+
+
+control_states_df89 = pd.concat([new_york_df89, indiana_df89, pennsylvania_df89])
+control_states_df89.head()
+
+
+# In[401]:
+
+
+control_states_total_weight89 = control_states_df89['weight_t1'].sum()
+print (control_states_total_weight89)
+
+control_states_total_weighted_public89 = control_states_df89['weighted_public_var'].sum()
+print (control_states_total_weighted_public89)
+
+control_states_recruitment_rate89 = control_states_total_weighted_public89/control_states_total_weight89
+print (control_states_recruitment_rate89)
+
+
+# Below is the calculation of the gap between the Illinois Recruitment Rate and the Control States Average Recruitment Rate between 2008-2009:
+
+# In[402]:
+
+
+gap89 = 0.03468611944250008 - 0.03366443005024353
+gap89
+
+
+# <b>2008-2009 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.03468611944250008
+# 
+# Control States Average Recruitment Rate: 0.03366443005024353
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = 0.0010216893922565529
+
+# <b>Parallel Trends Check 2009-2010 [Recruitment]:
+
+# In[403]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[404]:
+
+
+analyticsampledf0910 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_0910_recruitment.csv')
+analyticsampledf0910.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[405]:
+
+
+analyticsampledftwo0910 = analyticsampledf0910
+analyticsampledftwo0910.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[406]:
+
+
+#list(analyticsampledftwo0910.columns)
+
+
+# In[407]:
+
+
+analyticsampleover16for0910 = analyticsampledftwo0910[analyticsampledftwo0910['age_t1'] >= 16]
+analyticsampleover16for0910.head()
+
+
+# In[408]:
+
+
+analyticsampleover16for0910.describe()
+
+
+# In[409]:
+
+
+analyticsamplefiltered0910 = analyticsampleover16for0910[analyticsampleover16for0910['age_t1'] <= 35]
+analyticsamplefiltered0910.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered0910) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[410]:
+
+
+analyticsamplefiltered0910.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[411]:
+
+
+analyticsamplefiltered0910['weighted_public_var'] = analyticsamplefiltered0910['weight_t1'] * analyticsamplefiltered0910['joined_state_local']
+
+
+# In[412]:
+
+
+analyticsamplefiltered0910['weighted_public_var']
+
+
+# In[413]:
+
+
+workingsample0910 = analyticsamplefiltered0910
+workingsample0910.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample0910 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[414]:
+
+
+workingsample0910.groupby('state_t')
+workingsample0910.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[415]:
+
+
+illinois_df0910 = workingsample0910[workingsample0910['state_t'] == 'illinois']
+illinois_df0910.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[416]:
+
+
+illinois_total_weight0910 = illinois_df0910['weight_t1'].sum()
+print (illinois_total_weight0910)
+
+illinois_total_weighted_public0910 = illinois_df0910['weighted_public_var'].sum()
+print (illinois_total_weighted_public0910)
+
+illinois_recruitment_rate0910 = illinois_total_weighted_public0910/illinois_total_weight0910
+print (illinois_recruitment_rate0910)
+
+
+# Below, I have isolated all the New York data from the workingsample0910 dataframe.
+
+# In[417]:
+
+
+new_york_df0910 = workingsample0910[workingsample0910['state_t'] == 'new_york']
+new_york_df0910.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[418]:
+
+
+ny_total_weight0910 = new_york_df0910['weight_t1'].sum()
+print (ny_total_weight0910)
+
+ny_total_weighted_public0910 = new_york_df0910['weighted_public_var'].sum()
+print (ny_total_weighted_public0910)
+
+ny_recruitment_rate0910 = ny_total_weighted_public0910/ny_total_weight0910
+print (ny_recruitment_rate0910)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[419]:
+
+
+indiana_df0910 = workingsample0910[workingsample0910['state_t'] == 'indiana']
+indiana_df0910.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[420]:
+
+
+indiana_total_weight0910 = indiana_df0910['weight_t1'].sum()
+print (indiana_total_weight0910)
+
+indiana_total_weighted_public0910 = indiana_df0910['weighted_public_var'].sum()
+print (indiana_total_weighted_public0910)
+
+indiana_recruitment_rate0910 = indiana_total_weighted_public0910/indiana_total_weight0910
+print (indiana_recruitment_rate0910)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[421]:
+
+
+pennsylvania_df0910 = workingsample0910[workingsample0910['state_t'] == 'pennsylvania']
+pennsylvania_df0910.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[422]:
+
+
+penn_total_weight0910 = pennsylvania_df0910['weight_t1'].sum()
+print (penn_total_weight0910)
+
+penn_total_weighted_public0910 = pennsylvania_df0910['weighted_public_var'].sum()
+print (penn_total_weighted_public0910)
+
+penn_recruitment_rate0910 = penn_total_weighted_public0910/penn_total_weight0910
+print (penn_recruitment_rate0910)
+
+
+# In[423]:
+
+
+illinois_df0910 = workingsample0910[workingsample0910['state_t'] == 'illinois']
+illinois_df0910.head()
+
+
+# In[424]:
+
+
+control_states_df0910 = pd.concat([new_york_df0910, indiana_df0910, pennsylvania_df0910])
+control_states_df0910.head()
+
+
+# In[425]:
+
+
+control_states_total_weight0910 = control_states_df0910['weight_t1'].sum()
+print (control_states_total_weight0910)
+
+control_states_total_weighted_public0910 = control_states_df0910['weighted_public_var'].sum()
+print (control_states_total_weighted_public0910)
+
+control_states_recruitment_rate0910 = control_states_total_weighted_public0910/control_states_total_weight0910
+print (control_states_recruitment_rate0910)
+
+
+# Below is the calculation of the gap between the Illinois Recruitment Rate and the Control States Average Recruitment Rate between 2009-2010:
+
+# In[426]:
+
+
+gap0910 = 0.028247016709023687 - 0.029627508702124616
+gap0910
+
+
+# <b>2009-2010 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.028247016709023687
+# 
+# Control States Average Recruitment Rate: 0.029627508702124616
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = -0.001380491993100929
+
+# <b>Parallel Trends Check 2010-2011 [Recruitment]:
+
+# In[427]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[428]:
+
+
+analyticsampledf1011 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1011_recruitment.csv')
+analyticsampledf1011.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[429]:
+
+
+analyticsampledftwo1011 = analyticsampledf1011
+analyticsampledftwo1011.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[430]:
+
+
+#list(analyticsampledftwo1011.columns)
+
+
+# In[431]:
+
+
+analyticsampleover16for1011 = analyticsampledftwo1011[analyticsampledftwo1011['age_t1'] >= 16]
+analyticsampleover16for1011.head()
+
+
+# In[432]:
+
+
+analyticsampleover16for1011.describe()
+
+
+# In[433]:
+
+
+analyticsamplefiltered1011 = analyticsampleover16for1011[analyticsampleover16for1011['age_t1'] <= 35]
+analyticsamplefiltered1011.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1011) contains the analytic sample for workers ages 16 to 35 (inclusive) in the states of Illinois, Indiana, Pennslyvania, and New York in the time period 2010-2011. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[434]:
+
+
+analyticsamplefiltered1011.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[435]:
+
+
+analyticsamplefiltered1011['weighted_public_var'] = analyticsamplefiltered1011['weight_t1'] * analyticsamplefiltered1011['joined_state_local']
+
+
+# In[436]:
+
+
+analyticsamplefiltered1011['weighted_public_var']
+
+
+# In[437]:
+
+
+workingsample1011 = analyticsamplefiltered1011
+workingsample1011.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1011 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[438]:
+
+
+workingsample1011.groupby('state_t')
+workingsample1011.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[439]:
+
+
+illinois_df1011 = workingsample1011[workingsample1011['state_t'] == 'illinois']
+illinois_df1011.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[440]:
+
+
+illinois_total_weight1011 = illinois_df1011['weight_t1'].sum()
+print (illinois_total_weight1011)
+
+illinois_total_weighted_public1011 = illinois_df1011['weighted_public_var'].sum()
+print (illinois_total_weighted_public1011)
+
+illinois_recruitment_rate1011 = illinois_total_weighted_public1011/illinois_total_weight1011
+print (illinois_recruitment_rate1011)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[441]:
+
+
+new_york_df1011 = workingsample1011[workingsample1011['state_t'] == 'new_york']
+new_york_df1011.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[442]:
+
+
+ny_total_weight1011 = new_york_df1011['weight_t1'].sum()
+print (ny_total_weight1011)
+
+ny_total_weighted_public1011 = new_york_df1011['weighted_public_var'].sum()
+print (ny_total_weighted_public1011)
+
+ny_recruitment_rate1011 = ny_total_weighted_public1011/ny_total_weight1011
+print (ny_recruitment_rate1011)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[443]:
+
+
+indiana_df1011 = workingsample1011[workingsample1011['state_t'] == 'indiana']
+indiana_df1011
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[444]:
+
+
+indiana_total_weight1011 = indiana_df1011['weight_t1'].sum()
+print (indiana_total_weight1011)
+
+indiana_total_weighted_public1011 = indiana_df1011['weighted_public_var'].sum()
+print (indiana_total_weighted_public1011)
+
+indiana_recruitment_rate1011 = indiana_total_weighted_public1011/indiana_total_weight1011
+print (indiana_recruitment_rate1011)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[445]:
+
+
+pennsylvania_df1011 = workingsample1011[workingsample1011['state_t'] == 'pennsylvania']
+pennsylvania_df1011.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[446]:
+
+
+penn_total_weight1011 = pennsylvania_df1011['weight_t1'].sum()
+print (penn_total_weight1011)
+
+penn_total_weighted_public1011 = pennsylvania_df1011['weighted_public_var'].sum()
+print (penn_total_weighted_public1011)
+
+penn_recruitment_rate1011 = penn_total_weighted_public1011/penn_total_weight1011
+print (penn_recruitment_rate1011)
+
+
+# In[447]:
+
+
+illinois_df1011 = workingsample1011[workingsample1011['state_t'] == 'illinois']
+illinois_df1011.head()
+
+
+# In[448]:
+
+
+control_states_df1011 = pd.concat([new_york_df1011, indiana_df1011, pennsylvania_df1011])
+control_states_df1011.head()
+
+
+# In[449]:
+
+
+control_states_total_weight1011 = control_states_df1011['weight_t1'].sum()
+print (control_states_total_weight1011)
+
+control_states_total_weighted_public1011 = control_states_df1011['weighted_public_var'].sum()
+print (control_states_total_weighted_public1011)
+
+control_states_recruitment_rate1011 = control_states_total_weighted_public1011/control_states_total_weight1011
+print (control_states_recruitment_rate1011)
+
+
+# In[450]:
+
+
+gap1011 = 0.0357799454868793 - 0.032280361630530816
+gap1011
+
+
+# <b>2010-2011 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.0357799454868793
+# 
+# Control States Average Recruitment Rate: 0.032280361630530816
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = 0.0034995838563484857
+
+# <b>Parallel Trends Check 2011-2012:
+
+# In[451]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[452]:
+
+
+analyticsampledf1112 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1112_recruitment.csv')
+analyticsampledf1112.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[453]:
+
+
+analyticsampledf21112 = analyticsampledf1112
+analyticsampledf21112.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[454]:
+
+
+#list(analyticsampledf21112.columns)
+
+
+# In[455]:
+
+
+analyticsampleover161112 = analyticsampledf21112[analyticsampledf21112['age_t1'] >= 16]
+analyticsampleover161112.head()
+
+
+# In[456]:
+
+
+analyticsampleover161112.describe()
+
+
+# In[457]:
+
+
+analyticsamplefiltered1112 = analyticsampleover161112[analyticsampleover161112['age_t1'] <= 35]
+analyticsamplefiltered1112.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1112) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[458]:
+
+
+analyticsamplefiltered1112.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[459]:
+
+
+analyticsamplefiltered1112['weighted_public_var'] = analyticsamplefiltered1112['weight_t1'] * analyticsamplefiltered1112['joined_state_local']
+
+
+# In[460]:
+
+
+analyticsamplefiltered1112['weighted_public_var']
+
+
+# In[461]:
+
+
+workingsample1112 = analyticsamplefiltered1112
+workingsample1112.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1112 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[462]:
+
+
+workingsample1112.groupby('state_t')
+workingsample1112.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[463]:
+
+
+illinois_df1112 = workingsample1112[workingsample1112['state_t'] == 'illinois']
+illinois_df1112.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[464]:
+
+
+illinois_total_weight1112 = illinois_df1112['weight_t1'].sum()
+print (illinois_total_weight1112)
+
+illinois_total_weighted_public1112 = illinois_df1112['weighted_public_var'].sum()
+print (illinois_total_weighted_public1112)
+
+illinois_recruitment_rate1112 = illinois_total_weighted_public1112/illinois_total_weight1112
+print (illinois_recruitment_rate1112)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[465]:
+
+
+new_york_df1112 = workingsample1112[workingsample1112['state_t'] == 'new_york']
+new_york_df1112.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[466]:
+
+
+ny_total_weight1112 = new_york_df1112['weight_t1'].sum()
+print (ny_total_weight)
+
+ny_total_weighted_public1112 = new_york_df1112['weighted_public_var'].sum()
+print (ny_total_weighted_public1112)
+
+ny_recruitment_rate1112 = ny_total_weighted_public1112/ny_total_weight1112
+print (ny_recruitment_rate1112)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[467]:
+
+
+indiana_df1112 = workingsample1112[workingsample1112['state_t'] == 'indiana']
+indiana_df1112.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[468]:
+
+
+indiana_total_weight1112 = indiana_df1112['weight_t1'].sum()
+print (indiana_total_weight1112)
+
+indiana_total_weighted_public1112 = indiana_df1112['weighted_public_var'].sum()
+print (indiana_total_weighted_public1112)
+
+indiana_recruitment_rate1112 = indiana_total_weighted_public1112/indiana_total_weight1112
+print (indiana_recruitment_rate1112)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[469]:
+
+
+pennsylvania_df1112 = workingsample1112[workingsample1112['state_t'] == 'pennsylvania']
+pennsylvania_df1112.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[470]:
+
+
+penn_total_weight1112 = pennsylvania_df1112['weight_t1'].sum()
+print (penn_total_weight1112)
+
+penn_total_weighted_public1112 = pennsylvania_df1112['weighted_public_var'].sum()
+print (penn_total_weighted_public1112)
+
+penn_recruitment_rate1112 = penn_total_weighted_public1112/penn_total_weight1112
+print (penn_recruitment_rate1112)
+
+
+# In[471]:
+
+
+illinois_df1112 = workingsample1112[workingsample1112['state_t'] == 'illinois']
+illinois_df1112.head()
+
+
+# In[472]:
+
+
+control_states_df1112 = pd.concat([new_york_df1112, indiana_df1112, pennsylvania_df1112])
+control_states_df1112.head()
+
+
+# In[473]:
+
+
+control_states_total_weight1112 = control_states_df1112['weight_t1'].sum()
+print (control_states_total_weight1112)
+
+control_states_total_weighted_public1112 = control_states_df1112['weighted_public_var'].sum()
+print (control_states_total_weighted_public1112)
+
+control_states_recruitment_rate1112 = control_states_total_weighted_public1112/control_states_total_weight1112
+print (control_states_recruitment_rate1112)
+
+
+# In[474]:
+
+
+gap1112 = 0.02692204003091783 - 0.03044887145689623
+gap1112
+
+
+# <b>2011-2012 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.02692204003091783
+# 
+# Control States Average Recruitment Rate: 0.03044887145689623
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = -0.003526831425978403
+
+# <b>Parallel Trends Check 2012-2013:
+
+# In[475]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[476]:
+
+
+analyticsampledf1213 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1213_recruitment.csv')
+analyticsampledf1213.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[477]:
+
+
+analyticsampledf21213 = analyticsampledf1213
+analyticsampledf21213.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[478]:
+
+
+#list(analyticsampledf21213.columns)
+
+
+# In[479]:
+
+
+analyticsampleover161213 = analyticsampledf21213[analyticsampledf21213['age_t1'] >= 16]
+analyticsampleover161213.head()
+
+
+# In[480]:
+
+
+analyticsampleover161213.describe()
+
+
+# In[481]:
+
+
+analyticsamplefiltered1213 = analyticsampleover161213[analyticsampleover161213['age_t1'] <= 35]
+analyticsamplefiltered1213.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1213) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[482]:
+
+
+analyticsamplefiltered1213.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[483]:
+
+
+analyticsamplefiltered1213['weighted_public_var'] = analyticsamplefiltered1213['weight_t1'] * analyticsamplefiltered1213['joined_state_local']
+
+
+# In[484]:
+
+
+analyticsamplefiltered1213['weighted_public_var']
+
+
+# In[485]:
+
+
+workingsample1213 = analyticsamplefiltered1213
+workingsample1213.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1213 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[486]:
+
+
+workingsample1213.groupby('state_t')
+workingsample1213.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[487]:
+
+
+illinois_df1213 = workingsample1213[workingsample1213['state_t'] == 'illinois']
+illinois_df1213.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[488]:
+
+
+illinois_total_weight1213 = illinois_df1213['weight_t1'].sum()
+print (illinois_total_weight1213)
+
+illinois_total_weighted_public1213 = illinois_df1213['weighted_public_var'].sum()
+print (illinois_total_weighted_public1213)
+
+illinois_recruitment_rate1213 = illinois_total_weighted_public1213/illinois_total_weight1213
+print (illinois_recruitment_rate1213)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[489]:
+
+
+new_york_df1213 = workingsample1213[workingsample1213['state_t'] == 'new_york']
+new_york_df1213.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[490]:
+
+
+ny_total_weight1213 = new_york_df1213['weight_t1'].sum()
+print (ny_total_weight1213)
+
+ny_total_weighted_public1213 = new_york_df1213['weighted_public_var'].sum()
+print (ny_total_weighted_public1213)
+
+ny_recruitment_rate1213 = ny_total_weighted_public1213/ny_total_weight1213
+print (ny_recruitment_rate1213)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[491]:
+
+
+indiana_df1213 = workingsample1213[workingsample1213['state_t'] == 'indiana']
+indiana_df1213.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[492]:
+
+
+indiana_total_weight1213 = indiana_df1213['weight_t1'].sum()
+print (indiana_total_weight1213)
+
+indiana_total_weighted_public1213 = indiana_df1213['weighted_public_var'].sum()
+print (indiana_total_weighted_public1213)
+
+indiana_recruitment_rate1213 = indiana_total_weighted_public1213/indiana_total_weight1213
+print (indiana_recruitment_rate1213)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[493]:
+
+
+pennsylvania_df1213 = workingsample1213[workingsample1213['state_t'] == 'pennsylvania']
+pennsylvania_df1213.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[494]:
+
+
+penn_total_weight1213 = pennsylvania_df1213['weight_t1'].sum()
+print (penn_total_weight1213)
+
+penn_total_weighted_public1213 = pennsylvania_df1213['weighted_public_var'].sum()
+print (penn_total_weighted_public1213)
+
+penn_recruitment_rate1213 = penn_total_weighted_public1213/penn_total_weight1213
+print (penn_recruitment_rate1213)
+
+
+# In[495]:
+
+
+control_states_df1213 = pd.concat([new_york_df1213, indiana_df1213, pennsylvania_df1213])
+control_states_df1213.head()
+
+
+# In[496]:
+
+
+control_states_total_weight1213 = control_states_df1213['weight_t1'].sum()
+print (control_states_total_weight1213)
+
+control_states_total_weighted_public1213 = control_states_df1213['weighted_public_var'].sum()
+print (control_states_total_weighted_public1213)
+
+control_states_recruitment_rate1213 = control_states_total_weighted_public1213/control_states_total_weight1213
+print (control_states_recruitment_rate1213)
+
+
+# In[497]:
+
+
+gap1213 = 0.03618230322890149 - 0.023079397329713473
+gap1213
+
+
+# <b>2012-2013 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.03618230322890149
+# 
+# Control States Average Recruitment Rate: 0.023079397329713473
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = 0.013102905899188014
+
+# <b>Parallel Trends Check 2013-2014:
+
+# In[498]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[499]:
+
+
+analyticsampledf1314 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1314_recruitment.csv')
+analyticsampledf1314.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[500]:
+
+
+analyticsampledf21314 = analyticsampledf1314
+analyticsampledf21314.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[501]:
+
+
+#list(analyticsampledf21314.columns)
+
+
+# In[502]:
+
+
+analyticsampleover161314 = analyticsampledf21314[analyticsampledf21314['age_t1'] >= 16]
+analyticsampleover161314.head()
+
+
+# In[503]:
+
+
+analyticsampleover161314.describe()
+
+
+# In[504]:
+
+
+analyticsamplefiltered1314 = analyticsampleover161314[analyticsampleover161314['age_t1'] <= 35]
+analyticsamplefiltered1314.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1314) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[505]:
+
+
+analyticsamplefiltered1314.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[506]:
+
+
+analyticsamplefiltered1314['weighted_public_var'] = analyticsamplefiltered1314['weight_t1'] * analyticsamplefiltered1314['joined_state_local']
+
+
+# In[507]:
+
+
+analyticsamplefiltered1314['weighted_public_var']
+
+
+# In[508]:
+
+
+workingsample1314 = analyticsamplefiltered1314
+workingsample1314.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1314 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+# 
+# 
+# Please also note that for the following coding, I am now using 'state' in place of 'state_t' like the previous time periods due to the limitations of the analytic sample.
+
+# In[509]:
+
+
+workingsample1314.groupby('state')
+workingsample1314.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[510]:
+
+
+illinois_df1314 = workingsample1314[workingsample1314['state'] == 'illinois']
+illinois_df1314.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[511]:
+
+
+illinois_total_weight1314 = illinois_df1314['weight_t1'].sum()
+print (illinois_total_weight1314)
+
+illinois_total_weighted_public1314 = illinois_df1314['weighted_public_var'].sum()
+print (illinois_total_weighted_public1314)
+
+illinois_recruitment_rate1314 = illinois_total_weighted_public1314/illinois_total_weight1314
+print (illinois_recruitment_rate1314)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[512]:
+
+
+new_york_df1314 = workingsample1314[workingsample1314['state'] == 'new_york']
+new_york_df1314.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[513]:
+
+
+ny_total_weight1314 = new_york_df1314['weight_t1'].sum()
+print (ny_total_weight1314)
+
+ny_total_weighted_public1314 = new_york_df1314['weighted_public_var'].sum()
+print (ny_total_weighted_public1314)
+
+ny_recruitment_rate1314 = ny_total_weighted_public1314/ny_total_weight1314
+print (ny_recruitment_rate1314)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[514]:
+
+
+indiana_df1314 = workingsample1314[workingsample1314['state'] == 'indiana']
+indiana_df1314.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[515]:
+
+
+indiana_total_weight1314 = indiana_df1314['weight_t1'].sum()
+print (indiana_total_weight1314)
+
+indiana_total_weighted_public1314 = indiana_df1314['weighted_public_var'].sum()
+print (indiana_total_weighted_public1314)
+
+indiana_recruitment_rate1314 = indiana_total_weighted_public1314/indiana_total_weight1314
+print (indiana_recruitment_rate1314)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[516]:
+
+
+pennsylvania_df1314 = workingsample1314[workingsample1314['state'] == 'pennsylvania']
+pennsylvania_df1314.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[517]:
+
+
+penn_total_weight1314 = pennsylvania_df1314['weight_t1'].sum()
+print (penn_total_weight1314)
+
+penn_total_weighted_public1314 = pennsylvania_df1314['weighted_public_var'].sum()
+print (penn_total_weighted_public1314)
+
+penn_recruitment_rate1314 = penn_total_weighted_public1314/penn_total_weight1314
+print (penn_recruitment_rate1314)
+
+
+# In[518]:
+
+
+control_states_df1314 = pd.concat([new_york_df1314, indiana_df1314, pennsylvania_df1314])
+control_states_df1314.head()
+
+
+# In[519]:
+
+
+control_states_total_weight1314 = control_states_df1314['weight_t1'].sum()
+print (control_states_total_weight1314)
+
+control_states_total_weighted_public1314 = control_states_df1314['weighted_public_var'].sum()
+print (control_states_total_weighted_public1314)
+
+control_states_recruitment_rate1314 = control_states_total_weighted_public1314/control_states_total_weight1314
+print (control_states_recruitment_rate1314)
+
+
+# In[520]:
+
+
+gap1314 = 0.02854915840639841 - 0.02383636512808929
+gap1314
+
+
+# <b>2013-2014 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.02854915840639841
+# 
+# Control States Average Recruitment Rate: 0.02383636512808929
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = 0.004712793278309119
+
+# <b>Parallel Trends Check 2014-2015:
+
+# In[521]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[522]:
+
+
+analyticsampledf1415 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1415_recruitment.csv')
+analyticsampledf1415.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[523]:
+
+
+analyticsampledf21415 = analyticsampledf1415
+analyticsampledf21415.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[524]:
+
+
+#list(analyticsampledf21415.columns)
+
+
+# In[525]:
+
+
+analyticsampleover161415 = analyticsampledf21415[analyticsampledf21415['age_t1'] >= 16]
+analyticsampleover161415.head()
+
+
+# In[526]:
+
+
+analyticsampleover161415.describe()
+
+
+# In[527]:
+
+
+analyticsamplefiltered1415 = analyticsampleover161415[analyticsampleover161415['age_t1'] <= 35]
+analyticsamplefiltered1415.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1415) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[528]:
+
+
+analyticsamplefiltered1415.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[529]:
+
+
+analyticsamplefiltered1415['weighted_public_var'] = analyticsamplefiltered1415['weight_t1'] * analyticsamplefiltered1415['joined_state_local']
+
+
+# In[530]:
+
+
+analyticsamplefiltered1415['weighted_public_var']
+
+
+# In[531]:
+
+
+workingsample1415 = analyticsamplefiltered1415
+workingsample1415.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1415 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[532]:
+
+
+workingsample1415.groupby('state')
+workingsample1415.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[533]:
+
+
+illinois_df1415 = workingsample1415[workingsample1415['state'] == 'illinois']
+illinois_df1415.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[534]:
+
+
+illinois_total_weight1415 = illinois_df1415['weight_t1'].sum()
+print (illinois_total_weight1415)
+
+illinois_total_weighted_public1415 = illinois_df1415['weighted_public_var'].sum()
+print (illinois_total_weighted_public1415)
+
+illinois_recruitment_rate1415 = illinois_total_weighted_public1415/illinois_total_weight1415
+print (illinois_recruitment_rate1415)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[535]:
+
+
+new_york_df1415 = workingsample1415[workingsample1415['state'] == 'new_york']
+new_york_df1415.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[536]:
+
+
+ny_total_weight1415 = new_york_df1415['weight_t1'].sum()
+print (ny_total_weight1415)
+
+ny_total_weighted_public1415 = new_york_df1415['weighted_public_var'].sum()
+print (ny_total_weighted_public1415)
+
+ny_recruitment_rate1415 = ny_total_weighted_public1415/ny_total_weight1415
+print (ny_recruitment_rate1415)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[537]:
+
+
+indiana_df1415 = workingsample1415[workingsample1415['state'] == 'indiana']
+indiana_df1415.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[538]:
+
+
+indiana_total_weight1415 = indiana_df1415['weight_t1'].sum()
+print (indiana_total_weight1415)
+
+indiana_total_weighted_public1415 = indiana_df1415['weighted_public_var'].sum()
+print (indiana_total_weighted_public1415)
+
+indiana_recruitment_rate1415 = indiana_total_weighted_public1415/indiana_total_weight1415
+print (indiana_recruitment_rate1415)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[539]:
+
+
+pennsylvania_df1415 = workingsample1415[workingsample1415['state'] == 'pennsylvania']
+pennsylvania_df1415.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[540]:
+
+
+penn_total_weight1415 = pennsylvania_df1415['weight_t1'].sum()
+print (penn_total_weight1415)
+
+penn_total_weighted_public1415 = pennsylvania_df1415['weighted_public_var'].sum()
+print (penn_total_weighted_public1415)
+
+penn_recruitment_rate1415 = penn_total_weighted_public1415/penn_total_weight1415
+print (penn_recruitment_rate1415)
+
+
+# In[541]:
+
+
+control_states_df1415 = pd.concat([new_york_df1415, indiana_df1415, pennsylvania_df1415])
+control_states_df1415.head()
+
+
+# In[542]:
+
+
+control_states_total_weight1415 = control_states_df1415['weight_t1'].sum()
+print (control_states_total_weight1415)
+
+control_states_total_weighted_public1415 = control_states_df1415['weighted_public_var'].sum()
+print (control_states_total_weighted_public1415)
+
+control_states_recruitment_rate1415 = control_states_total_weighted_public1415/control_states_total_weight1415
+print (control_states_recruitment_rate1415)
+
+
+# In[543]:
+
+
+gap1415 = 0.03266708316124397 - 0.018176031190527964
+gap1415
+
+
+# <b>2014-2015 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.03266708316124397
+# 
+# Control States Average Recruitment Rate: 0.018176031190527964
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = 0.014491051970716005
+
+# <b>Parallel Trends Check 2015-2016:
+
+# In[544]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[545]:
+
+
+analyticsampledf1516 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1516_recruitment.csv')
+analyticsampledf1516.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[546]:
+
+
+analyticsampledf21516 = analyticsampledf1516
+analyticsampledf21516.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[547]:
+
+
+#list(analyticsampledf21516.columns)
+
+
+# In[548]:
+
+
+analyticsampleover161516 = analyticsampledf21516[analyticsampledf21516['age_t1'] >= 16]
+analyticsampleover161516.head()
+
+
+# In[549]:
+
+
+analyticsampleover161516.describe()
+
+
+# In[550]:
+
+
+analyticsamplefiltered1516 = analyticsampleover161516[analyticsampleover161516['age_t1'] <= 35]
+analyticsamplefiltered1516.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1516) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[551]:
+
+
+analyticsamplefiltered1516.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[552]:
+
+
+analyticsamplefiltered1516['weighted_public_var'] = analyticsamplefiltered1516['weight_t1'] * analyticsamplefiltered1516['joined_state_local']
+
+
+# In[553]:
+
+
+analyticsamplefiltered1516['weighted_public_var']
+
+
+# In[554]:
+
+
+workingsample1516 = analyticsamplefiltered1516
+workingsample1516.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1516 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[555]:
+
+
+workingsample1516.groupby('state')
+workingsample1516.head(5)
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[556]:
+
+
+illinois_df1516 = workingsample1516[workingsample1516['state'] == 'illinois']
+illinois_df1516.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[557]:
+
+
+illinois_total_weight1516 = illinois_df1516['weight_t1'].sum()
+print (illinois_total_weight1516)
+
+illinois_total_weighted_public1516 = illinois_df1516['weighted_public_var'].sum()
+print (illinois_total_weighted_public1516)
+
+illinois_recruitment_rate1516 = illinois_total_weighted_public1516/illinois_total_weight1516
+print (illinois_recruitment_rate1516)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[558]:
+
+
+new_york_df1516 = workingsample1516[workingsample1516['state'] == 'new_york']
+new_york_df1516.head(5)
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[559]:
+
+
+ny_total_weight1516 = new_york_df1516['weight_t1'].sum()
+print (ny_total_weight1516)
+
+ny_total_weighted_public1516 = new_york_df1516['weighted_public_var'].sum()
+print (ny_total_weighted_public1516)
+
+ny_recruitment_rate1516 = ny_total_weighted_public1516/ny_total_weight1516
+print (ny_recruitment_rate1516)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[560]:
+
+
+indiana_df1516 = workingsample1516[workingsample1516['state'] == 'indiana']
+indiana_df1516.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[561]:
+
+
+indiana_total_weight1516 = indiana_df1516['weight_t1'].sum()
+print (indiana_total_weight1516)
+
+indiana_total_weighted_public1516 = indiana_df1516['weighted_public_var'].sum()
+print (indiana_total_weighted_public1516)
+
+indiana_recruitment_rate1516 = indiana_total_weighted_public1516/indiana_total_weight1516
+print (indiana_recruitment_rate1516)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[562]:
+
+
+pennsylvania_df1516 = workingsample1516[workingsample1516['state'] == 'pennsylvania']
+pennsylvania_df1516.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[563]:
+
+
+penn_total_weight1516 = pennsylvania_df1516['weight_t1'].sum()
+print (penn_total_weight1516)
+
+penn_total_weighted_public1516 = pennsylvania_df1516['weighted_public_var'].sum()
+print (penn_total_weighted_public1516)
+
+penn_recruitment_rate1516 = penn_total_weighted_public1516/penn_total_weight1516
+print (penn_recruitment_rate1516)
+
+
+# In[564]:
+
+
+control_states_df1516 = pd.concat([new_york_df1516, indiana_df1516, pennsylvania_df1516])
+control_states_df1516.head()
+
+
+# In[565]:
+
+
+control_states_total_weight1516 = control_states_df1516['weight_t1'].sum()
+print (control_states_total_weight1516)
+
+control_states_total_weighted_public1516 = control_states_df1516['weighted_public_var'].sum()
+print (control_states_total_weighted_public1516)
+
+control_states_recruitment_rate1516 = control_states_total_weighted_public1516/control_states_total_weight1516
+print (control_states_recruitment_rate1516)
+
+
+# In[566]:
+
+
+gap1516 = 0.02472039458985427 - 0.02691263919608778
+gap1516
+
+
+# <b>2015-2016 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.02472039458985427
+# 
+# Control States Average Recruitment Rate: 0.02691263919608778
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = -0.0021922446062335108
+
+# <b>Parallel Trends Check 2016-2017 [Recriutment]:
+
+# In[567]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# Loaded the analytic sample into my notebook:
+
+# In[568]:
+
+
+analyticsampledf1617 = pd.read_csv('/Users/morganwalker/Documents/PDIPensionProjectMorganWalker/analytic_sample_1617_recruitment.csv')
+analyticsampledf1617.head()
+
+
+# Made a copy of the analytic sample to work with without modifying the original:
+
+# In[569]:
+
+
+analyticsampledf21617 = analyticsampledf1617
+analyticsampledf21617.head()
+
+
+# Made a list of the column names in the analytic sample so that I could identify the label of the age column. Please note that I have currently saved this as a comment just to keep the code notebook neater, but please simply delete the # for the original output if needed.
+
+# In[570]:
+
+
+#list(analyticsampledf21617.columns)
+
+
+# In[571]:
+
+
+analyticsampleover161617 = analyticsampledf21617[analyticsampledf21617['age_t1'] >= 16]
+analyticsampleover161617.head()
+
+
+# In[572]:
+
+
+analyticsampleover161617.describe()
+
+
+# In[573]:
+
+
+analyticsamplefiltered1617 = analyticsampleover161617[analyticsampleover161617['age_t1'] <= 35]
+analyticsamplefiltered1617.head()
+
+
+# Now, the above dataframe (analyticsamplefiltered1617) contains the analytic sample for workers ages 16 to 35 in the states of Illinois, Indiana, Pennslyvania, and New York. I will use this as my recruitment proxy. Steps 1-4 complete. 
+
+# In[574]:
+
+
+analyticsamplefiltered1617.describe()
+#analyticsamplefiltered.columns
+#list(analyticsamplefiltered.columns)
+
+
+# Now, to "create the weighted public variable," I made "a new column that equals public x weight" for each row. "This variable will allow [me] to calculate the weighted public-sector share."
+
+# In[575]:
+
+
+analyticsamplefiltered1617['weighted_public_var'] = analyticsamplefiltered1617['weight_t1'] * analyticsamplefiltered1617['joined_state_local']
+
+
+# In[576]:
+
+
+analyticsamplefiltered1617['weighted_public_var']
+
+
+# In[577]:
+
+
+workingsample1617 = analyticsamplefiltered1617
+workingsample1617.head()
+
+
+# Up to this point, I have now completed through Step 5, and created a weighted public variable. This is an additional column appended to the dataframe that includes the weight in time period t_1 multiplied by the value in the joined_state_local value in that same row (which is a 1 or a 0 in every row, depending on whether that household joined the public sector workforce that time period or not), for each and every row of the dataframe. The values in this column in each individual row are on their own useless to us at this time, but when the column is summed, should give us the weighted value of the population that joined the public sector workforce in this period. Please also note that I am now working with the same data, but renamed it workingsample1617 for ease and to make sure that any changes made to this new dataframe do not impact or interfere with the original data I am working with. 
+
+# In[578]:
+
+
+workingsample1617.groupby('state')
+workingsample1617.head()
+
+
+# Below, I have isolated all the Illinois data from the workingsample dataframe.
+
+# In[579]:
+
+
+illinois_df1617 = workingsample1617[workingsample1617['state'] == 'illinois']
+illinois_df1617.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Illinois.
+
+# In[580]:
+
+
+illinois_total_weight1617 = illinois_df1617['weight_t1'].sum()
+print (illinois_total_weight1617)
+
+illinois_total_weighted_public1617 = illinois_df1617['weighted_public_var'].sum()
+print (illinois_total_weighted_public1617)
+
+illinois_recruitment_rate1617 = illinois_total_weighted_public1617/illinois_total_weight1617
+print (illinois_recruitment_rate1617)
+
+
+# Below, I have isolated all the New York data from the workingsample dataframe.
+
+# In[581]:
+
+
+new_york_df1617 = workingsample1617[workingsample1617['state'] == 'new_york']
+new_york_df1617.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for New York.
+
+# In[582]:
+
+
+ny_total_weight1617 = new_york_df1617['weight_t1'].sum()
+print (ny_total_weight1617)
+
+ny_total_weighted_public1617 = new_york_df1617['weighted_public_var'].sum()
+print (ny_total_weighted_public1617)
+
+ny_recruitment_rate1617 = ny_total_weighted_public1617/ny_total_weight1617
+print (ny_recruitment_rate1617)
+
+
+# Below, I have isolated all the Indiana data from the workingsample dataframe.
+
+# In[583]:
+
+
+indiana_df1617 = workingsample1617[workingsample1617['state'] == 'indiana']
+indiana_df1617.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Indiana.
+
+# In[584]:
+
+
+indiana_total_weight1617 = indiana_df1617['weight_t1'].sum()
+print (indiana_total_weight1617)
+
+indiana_total_weighted_public1617 = indiana_df1617['weighted_public_var'].sum()
+print (indiana_total_weighted_public1617)
+
+indiana_recruitment_rate1617 = indiana_total_weighted_public1617/indiana_total_weight1617
+print (indiana_recruitment_rate1617)
+
+
+# Below, I have isolated all the Pennsylvania data from the workingsample dataframe.
+
+# In[585]:
+
+
+pennsylvania_df1617 = workingsample1617[workingsample1617['state'] == 'pennsylvania']
+pennsylvania_df1617.head()
+
+
+# Below, I calculated the total weight, total weighted public, and recruitment rate for Pennsylvania.
+
+# In[586]:
+
+
+penn_total_weight1617 = pennsylvania_df1617['weight_t1'].sum()
+print (penn_total_weight1617)
+
+penn_total_weighted_public1617 = pennsylvania_df1617['weighted_public_var'].sum()
+print (penn_total_weighted_public1617)
+
+penn_recruitment_rate1617 = penn_total_weighted_public1617/penn_total_weight1617
+print (penn_recruitment_rate1617)
+
+
+# In[587]:
+
+
+control_states_df1617 = pd.concat([new_york_df1617, indiana_df1617, pennsylvania_df1617])
+control_states_df1617.head()
+
+
+# In[588]:
+
+
+control_states_total_weight1617 = control_states_df1617['weight_t1'].sum()
+print (control_states_total_weight1617)
+
+control_states_total_weighted_public1617 = control_states_df1617['weighted_public_var'].sum()
+print (control_states_total_weighted_public1617)
+
+control_states_recruitment_rate1617 = control_states_total_weighted_public1617/control_states_total_weight1617
+print (control_states_recruitment_rate1617)
+
+
+# In[589]:
+
+
+gap1617 = 0.02290518742236183 - 0.024633113659209033
+gap1617
+
+
+# <b>2016-2017 Data Summary:
+# 
+# Illinois Recruitment Rate: 0.02290518742236183
+# 
+# Control States Average Recruitment Rate: 0.024633113659209033
+# 
+# Gap = Illinois Recruitment Rate - Control States Average Recruitment Rate = -0.0017279262368472027
+
+# <b><center>Recruitment Parallel Trends
+
+# In[598]:
+
+
+recruitmentparalleltrendsdata = {
+    'Year': ['08-09', '09-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16', '16-17'],
+    'Illinois Recruitment Rate': [0.03468611944250008, 0.028247016709023687, 0.0357799454868793, 0.02692204003091783, 0.03618230322890149, 0.02854915840639841, 0.03266708316124397, 0.02472039458985427, 0.02290518742236183],
+    'Control States Average Recruitment Rate': [0.03366443005024353, 0.029627508702124616, 0.032280361630530816, 0.03044887145689623, 0.023079397329713473, 0.02383636512808929, 0.018176031190527964, 0.02691263919608778, 0.024633113659209033],
+    'Gap (Between Illinois and Control States Recruitment Rate)': [0.0010216893922565529, -0.001380491993100929, 0.0034995838563484857, -0.003526831425978403, 0.013102905899188014, 0.004712793278309119, 0.014491051970716005, -0.0021922446062335108, -0.0017279262368472027]}
+
+recruitmentparalleltrendsdf = pd.DataFrame(recruitmentparalleltrendsdata)
+recruitmentparalleltrendsdf
+
+
+# In[601]:
+
+
+import matplotlib.pyplot as plt
+
+plt.plot(recruitmentparalleltrendsdf['Year'], recruitmentparalleltrendsdf['Illinois Recruitment Rate'], color = 'blue')
+plt.plot(recruitmentparalleltrendsdf['Year'], recruitmentparalleltrendsdf['Control States Average Recruitment Rate'], color = 'red')
+
+
+plt.xlabel('Time Period [Year Pairings]')
+plt.ylabel('Recruitment Rates')
+plt.axvline(x='10-11')
+plt.title('Public Employment Recruitment Rate in Illinois [Blue] vs. Control States [Red]; Yearly Levels')
+plt.legend()
+plt.show()
+
+
+# In[604]:
+
+
+import matplotlib.pyplot as plt
+
+plt.plot(recruitmentparalleltrendsdf['Year'], recruitmentparalleltrendsdf['Gap (Between Illinois and Control States Recruitment Rate)'], color = 'blue')
+
+plt.xlabel('Time Period [Year Pairings]')
+plt.ylabel('Gap in Recruitment Rates in Illinois vs. Control States')
+plt.axvline(x='10-11')
+plt.title('Difference in Illinois Recruitment Rate and Control States Recruitment Rate between 2008-2017; Yearly Gap')
+plt.legend()
+plt.show()
+
+
+# Before 2011, the recruitment rates of Illinois and the control states were relatively similar. Before the 2010-2011 time period, the gap in their recruitment rates were relatively close to zero (within less than 0.0005% difference from each other), as seen in the Gap graph above, and as evidenced by the visual closeness of the two trends in the Yearly Levels graph. The gap was roughly flat before 2011, as seen by the near-zero values in the gap graph. After the reform, we see significant visible divergence between the two recruitment rates, as compared to the very little visual divergence before 2011. The two recruitment rates are not equal, but they are much more divergent after 2011 than before, and before 2011, are within a very small margin of each other. After 2011, the divergence between the two trends widens.
