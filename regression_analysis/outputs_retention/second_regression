@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
-INPUT_FILE = Path.home() / "Downloads" / "retention_weighted_illinois_effects.csv"
+INPUT_FILE = Path.home() / "Documents" / "recruitment_weighted_illinois_effects.csv"
 
-OUTPUT_DIR = Path.home() / "Downloads" / "second_stage_beta_results"
+OUTPUT_DIR = Path.home() / "Documents" / "second_stage_beta_results_recruitment"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 POLICY_YEAR = 2011
