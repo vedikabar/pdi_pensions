@@ -6,9 +6,20 @@ import pandas as pd
 # -----------------------------
 # CONFIG
 # -----------------------------
-DATA_DIR = Path("/Users/vedikabaradwaj/pdi_pensions/data/csv")
+PROJECT_DIR = Path("/Users/vedikabaradwaj/pdi_pensions")
+MORG_DIR = PROJECT_DIR / "data" / "morg"           # input: per-year converted MORG files
+NAIVE_MERGE_DIR = PROJECT_DIR / "data" / "naive_merge"  # output: raw two-year join, pre-filter
+MATCH_DIR = PROJECT_DIR / "data" / "match"          # output: post S|R|A filter, validated panel
+
+NAIVE_MERGE_DIR.mkdir(parents=True, exist_ok=True)
+MATCH_DIR.mkdir(parents=True, exist_ok=True)
 
 YEAR_PAIRS = [
+    (2008, 2009),
+    (2009, 2010),
+    (2010, 2011),
+    (2011, 2012),
+    (2012, 2013),
     (2013, 2014),
     (2014, 2015),
     (2015, 2016),
@@ -16,7 +27,7 @@ YEAR_PAIRS = [
 ]
 
 # Where the per-pair attrition summary (see main()) gets written.
-ATTRITION_OUT = DATA_DIR / "merge_attrition_summary.csv"
+ATTRITION_OUT = MATCH_DIR / "merge_attrition_summary.csv"
 
 
 # -----------------------------
@@ -149,8 +160,8 @@ def main():
         print("=" * 80)
 
         # Build filenames like morg08.csv, morg09.csv
-        f0 = DATA_DIR / f"morg{str(y0)[-2:]}.csv"
-        f1 = DATA_DIR / f"morg{str(y1)[-2:]}.csv"
+        f0 = MORG_DIR / f"morg{str(y0)[-2:]}.csv"
+        f1 = MORG_DIR / f"morg{str(y1)[-2:]}.csv"
 
         df0 = load_morg(f0, y0)
         df1 = load_morg(f1, y1)
@@ -181,6 +192,10 @@ def main():
         naive_n = len(merged)
         print(f"Total matches: {naive_n:,}")
 
+        naive_out_file = NAIVE_MERGE_DIR / f"naive_merge_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
+        merged.to_csv(naive_out_file, index=False)
+        print(f"Saved naive merge: {naive_out_file.name}")
+
         print("\nStep 4: Apply sex/race/age (S|R|A) filter")
         valid, invalid = apply_sra_filter(merged)
 
@@ -188,10 +203,11 @@ def main():
         print(f"Valid matches: {valid_n:,}")
         print(f"Rejected matches: {invalid_n:,}")
 
-        # Save
-        out_file = DATA_DIR / f"merged_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
+        # Save the validated ("matched") panel -- this is the file downstream
+        # analytic-sample scripts should read from.
+        out_file = MATCH_DIR / f"match_morg_{str(y0)[-2:]}{str(y1)[-2:]}.csv"
         valid.to_csv(out_file, index=False)
-        print(f"Saved: {out_file.name}")
+        print(f"Saved match: {out_file.name}")
 
         # Track how much sample is lost at each pipeline stage, so it's easy
         # to see e.g. whether a given year pair matched unusually poorly.

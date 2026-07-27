@@ -4,8 +4,10 @@ from pathlib import Path
 # --------------------------------------------------
 # CONFIG
 # --------------------------------------------------
-# Put this script in the same folder as your merged CSVs
-DATA_DIR = Path(".")
+PROJECT_DIR = Path("/Users/vedikabaradwaj/pdi_pensions")
+MATCH_DIR = PROJECT_DIR / "data" / "match"                       # input: output of 03_merge_years_loop.py
+OUTPUT_DIR = PROJECT_DIR / "data" / "analytic_samples" / "il_public_t"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 YEAR_PAIRS = [
     (2008, 2009),
@@ -33,9 +35,8 @@ def pair_tag(y0: int, y1: int) -> str:
     return f"{str(y0)[-2:]}{str(y1)[-2:]}"
 
 
-def input_filename(y0: int, y1: int) -> str:
-    # Change this if your filenames are different
-    return f"/Users/vedikabaradwaj/pdi_pensions/data/csv/merged_morg_{pair_tag(y0, y1)}.csv"
+def input_filename(y0: int, y1: int) -> Path:
+    return MATCH_DIR / f"match_morg_{pair_tag(y0, y1)}.csv"
 
 
 def output_filename(y0: int, y1: int) -> str:
@@ -56,8 +57,8 @@ def validate_columns(df: pd.DataFrame, fname: str) -> None:
 
 
 def process_pair(y0: int, y1: int) -> None:
-    in_path = DATA_DIR / input_filename(y0, y1)
-    out_path = DATA_DIR / output_filename(y0, y1)
+    in_path = input_filename(y0, y1)
+    out_path = OUTPUT_DIR / output_filename(y0, y1)
 
     if not in_path.exists():
         print(f"Skipping {y0}-{y1}: file not found -> {in_path.name}")
