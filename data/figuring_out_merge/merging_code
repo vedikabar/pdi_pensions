@@ -60,9 +60,15 @@ def build_rename_map(df: pd.DataFrame, suffix: str, merge_keys: list[str]) -> di
 def create_panel(df08: pd.DataFrame, df09: pd.DataFrame) -> pd.DataFrame:
     merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "state"]
 
+    # Only MIS4 (year t) -> MIS8 (year t+1) is a real year-over-year link.
+    # Under the CPS 4-8-4 rotation design, MIS8 is the outgoing group that
+    # leaves the sample for good, so there's no household to find at MIS4
+    # the following year (Madrian & Lefgren 1999, NBER TWP 247, Sec. II).
+    # A prior version of this code also paired MIS8(t) with MIS4(t+1); those
+    # "matches" were shown to be spurious (age at t+1 was often *lower* than
+    # at t), so that branch has been removed.
     pairs = [
         (df08[df08["minsamp"] == 4].copy(), df09[df09["minsamp"] == 8].copy(), "MIS4_to_MIS8"),
-        (df08[df08["minsamp"] == 8].copy(), df09[df09["minsamp"] == 4].copy(), "MIS8_to_MIS4"),
     ]
 
     out = []
@@ -90,7 +96,13 @@ def create_panel(df08: pd.DataFrame, df09: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_sra_filter(df: pd.DataFrame):
-    needed = ["sex_t", "sex_t1", "race_t", "race_t1"]
+    # S|R|A criterion (Madrian & Lefgren 1999, NBER TWP 247, Sec. VII): a naive
+    # HHID/HHNUM/LINENO match is invalidated if sex differs, race differs, or
+    # age moved outside a plausible one-year range. We use their "less
+    # restrictive" age band: valid merges have age_t1 - age_t in [-1, 3]
+    # (accounts for birthday timing and some measurement error; a January
+    # birthday interviewed just before/after the cutoff can show 0 or 2 years).
+    needed = ["sex_t", "sex_t1", "race_t", "race_t1", "age_t", "age_t1"]
     missing = [c for c in needed if c not in df.columns]
     if missing:
         sys.exit(f"ERROR: Missing post-merge SRA columns: {missing}")
@@ -98,13 +110,17 @@ def apply_sra_filter(df: pd.DataFrame):
     sex_mismatch = df["sex_t"] != df["sex_t1"]
     race_mismatch = df["race_t"] != df["race_t1"]
 
-    invalid_mask = sex_mismatch | race_mismatch
+    age_diff = df["age_t1"] - df["age_t"]
+    age_mismatch = (age_diff < -1) | (age_diff > 3)
+
+    invalid_mask = sex_mismatch | race_mismatch | age_mismatch
 
     valid = df.loc[~invalid_mask].copy()
     invalid = df.loc[invalid_mask].copy()
 
     invalid["flag_sex"] = sex_mismatch.loc[invalid_mask]
     invalid["flag_race"] = race_mismatch.loc[invalid_mask]
+    invalid["flag_age"] = age_mismatch.loc[invalid_mask]
 
     return valid, invalid
 
@@ -119,13 +135,14 @@ def print_diagnostics(naive: pd.DataFrame, valid: pd.DataFrame, invalid: pd.Data
     print("=" * 60)
     print(f"Records in 2008 file        : {n_t:>10,}")
     print(f"Naive merged pairs         : {len(naive):>10,} ({naive_rate:.1f}%)")
-    print(f"Rejected by SR             : {len(invalid):>10,} ({reject_rate:.1f}% of naive)")
+    print(f"Rejected by S|R|A          : {len(invalid):>10,} ({reject_rate:.1f}% of naive)")
     print(f"Valid merged pairs         : {len(valid):>10,} ({valid_rate:.1f}%)")
 
     if len(invalid) > 0:
         print("\nBreakdown of rejected matches:")
         print(f"  Sex mismatch            : {invalid['flag_sex'].sum():>10,}")
         print(f"  Race mismatch           : {invalid['flag_race'].sum():>10,}")
+        print(f"  Age outside [-1, 3]     : {invalid['flag_age'].sum():>10,}")
 
     print("=" * 60)
 
