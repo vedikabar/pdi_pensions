@@ -1,0 +1,86 @@
+import pandas as pd
+
+INPUT_FILE = "/Users/morganwalker/Downloads/merged_morg_0809.csv"
+OUTPUT_FILE = "/Users/morganwalker/Downloads/analytic_sample_0809_controlsandil_non_public_t.csv"
+
+# -----------------------------
+# Load data
+# -----------------------------
+df = pd.read_csv(INPUT_FILE, low_memory=False)
+df.columns = df.columns.str.lower().str.strip()
+
+print(f"Loaded {len(df):,} rows")
+
+# -----------------------------
+# Required columns
+# -----------------------------
+required_cols = [
+    "sex_t", "sex_t1",
+    "race_t", "race_t1",
+    "stfips_t", "stfips_t1",
+    "class94_t", "class94_t1"
+]
+
+missing = [col for col in required_cols if col not in df.columns]
+if missing:
+    raise ValueError(f"Missing required columns: {missing}")
+
+# -----------------------------
+# Clean numeric columns
+# -----------------------------
+for col in ["stfips_t", "stfips_t1", "class94_t", "class94_t1"]:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+# -----------------------------
+# 1. Sex + race consistency
+# -----------------------------
+df = df[
+    (df["sex_t"] == df["sex_t1"]) &
+    (df["race_t"] == df["race_t1"])
+].copy()
+
+print(f"After sex/race filter: {len(df):,}")
+
+# -----------------------------
+# 2. Illinois + Controls only
+# -----------------------------
+df = df[
+    (df["stfips_t"].isin([17, 18, 36, 42])) &
+    (df["stfips_t1"].isin([17, 18, 36, 42]))
+].copy()
+
+#17 is the STFIPS code for Illinois
+
+print(f"After Illinois + controls filter: {len(df):,}")
+
+# -----------------------------
+# 3. Public at time t ONLY
+# -----------------------------
+NON_PUBLIC_CODES = [4, 5, 1, 6, 7, 8]
+
+df = df[df["class94_t"].isin(NON_PUBLIC_CODES)].copy()
+
+print(f"After public-at-t filter: {len(df):,}")
+
+# -----------------------------
+# (Optional but VERY useful)
+# Create outcome variables
+# -----------------------------
+
+# stayed in non public
+df["stayed_non_public"] = df["class94_t1"].isin(NON_PUBLIC_CODES)
+
+# exited non public
+df["exited_non_public"] = (
+    df["class94_t"].isin(NON_PUBLIC_CODES) &
+    ~df["class94_t1"].isin(NON_PUBLIC_CODES)
+)
+
+# switched sector (any change)
+df["switched_sector"] = df["class94_t"] != df["class94_t1"]
+
+# -----------------------------
+# Save
+# -----------------------------
+df.to_csv(OUTPUT_FILE, index=False)
+print(f"Saved to {OUTPUT_FILE}")
