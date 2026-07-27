@@ -26,20 +26,27 @@ def load_morg(path: Path, year: int) -> pd.DataFrame:
     df = pd.read_csv(path, low_memory=False)
     df.columns = df.columns.str.lower().str.strip()
 
-    if "state" not in df.columns and "stfips" in df.columns:
-        df["state"] = df["stfips"]
-
-    # "age" is required here (not just sex/race) because apply_sra_filter()
-    # now needs age_t/age_t1 for the Madrian & Lefgren S|R|A check below.
-    required_basic = ["hhid", "hhnum", "lineno", "intmonth", "minsamp", "sex", "race", "age"]
+    # "age" and "stfips" are required here (not just sex/race) because
+    # apply_sra_filter() needs age_t/age_t1 for the S|R|A check, and the
+    # merge key below needs stfips for consistent state coding.
+    required_basic = ["hhid", "hhnum", "lineno", "intmonth", "minsamp", "sex", "race", "age", "stfips"]
     missing = [c for c in required_basic if c not in df.columns]
     if missing:
         print(f"Skipping {path.name}: missing columns {missing}")
         return None
 
-    for col in ["hhid", "hhnum", "lineno", "intmonth", "state"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.strip()
+    # Merge key for state must use the same coding in every year. The raw
+    # "state" column uses CPS's internal state numbering and is missing
+    # entirely from the 2015 file; "stfips" (standard FIPS code) is present
+    # with identical coding in every year 2008-2015, so it -- not "state" --
+    # is used to join years. (Previously, a missing "state" column fell back
+    # to "state = stfips", which silently mixed the two numbering schemes
+    # across years and made every Illinois record fail to match in the
+    # 2014-2015 pair, since IL=33 under the old scheme but IL=17 under FIPS.)
+    df["state_key"] = df["stfips"]
+
+    for col in ["hhid", "hhnum", "lineno", "intmonth", "state_key"]:
+        df[col] = df[col].astype(str).str.strip()
 
     for col in ["minsamp", "sex", "race", "age"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -65,7 +72,7 @@ def build_rename_map(df: pd.DataFrame, suffix: str, merge_keys: list[str]) -> di
 
 
 def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
-    merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "state"]
+    merge_keys = ["hhid", "hhnum", "lineno", "intmonth", "state_key"]
 
     # Only MIS4 (year t) -> MIS8 (year t+1) is a real year-over-year link;
     # MIS8 is the outgoing group that leaves the sample for good, so there's
@@ -98,7 +105,11 @@ def create_panel(df_t: pd.DataFrame, df_t1: pd.DataFrame) -> pd.DataFrame:
     if not out:
         return pd.DataFrame()
 
-    return pd.concat(out, ignore_index=True)
+    # state_key was only needed to make the join itself; the original
+    # "state"/"stfips" columns (now state_t/state_t1, stfips_t/stfips_t1)
+    # already carry that information through for downstream filtering.
+    panel = pd.concat(out, ignore_index=True)
+    return panel.drop(columns=["state_key"])
 
 
 def apply_sra_filter(df: pd.DataFrame):
