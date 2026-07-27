@@ -165,8 +165,8 @@ def main():
     args = parser.parse_args()
 
     # Defaults if files are in same folder as script
-    path08 = resolve_path(args.morg08, "/Users/vedikabaradwaj/pdi_pensions/data/csv/morg08.csv")
-    path09 = resolve_path(args.morg09, "/Users/vedikabaradwaj/pdi_pensions/data/csv/morg09.csv")
+    path08 = resolve_path(args.morg08, "/Users/vedikabaradwaj/pdi_pensions/data/morg/morg08.csv")
+    path09 = resolve_path(args.morg09, "/Users/vedikabaradwaj/pdi_pensions/data/morg/morg09.csv")
     out_path = Path(args.out).expanduser().resolve()
 
     print("\nStep 1: Load data")

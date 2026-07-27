@@ -3,9 +3,14 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
-INPUT_FILE = Path.home() / "Documents" / "recruitment_weighted_illinois_effects.csv"
+PROJECT_DIR = Path("/Users/vedikabaradwaj/pdi_pensions")
 
-OUTPUT_DIR = Path.home() / "Documents" / "second_stage_beta_results_recruitment"
+# NOTE: this is the *retention* second-stage script (see labels/comments
+# below, e.g. "Illinois retention beta-hat") -- it previously pointed at
+# recruitment_weighted_illinois_effects.csv, which was a copy-paste bug.
+INPUT_FILE = PROJECT_DIR / "regression_analysis" / "outputs_retention" / "retention_weighted_illinois_effects.csv"
+
+OUTPUT_DIR = PROJECT_DIR / "regression_analysis" / "outputs_retention"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 POLICY_YEAR = 2011
@@ -165,6 +170,10 @@ print(input_out)
 print(results_out)
 print(excel_out)
 
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend: this runs as a plain script
+# via `python3 scripts/06_retention_second_stage.py`, and plt.show() below
+# would otherwise block waiting on a GUI window that never gets closed.
 import matplotlib.pyplot as plt
 
 # ------------------------------------------------------------
